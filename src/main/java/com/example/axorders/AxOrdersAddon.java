@@ -19,21 +19,40 @@ public class AxOrdersAddon extends JavaPlugin {
         saveDefaultConfig();
 
         currencyManager = new CurrencyManager(this);
+        currencyManager.init();
+        
+        if (currencyManager.getHook() == null) {
+            getLogger().warning("No economy hook found! Disabling currency features.");
+        }
+        
         orderManager = new OrderManager(this);
         orderManager.load();
 
-        getServer().getPluginManager().registerEvents(new OrdersGuiListener(this), this);
-        getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
+        //Listeners
+        register(new OrdersGuiListener(this));
+        register(new PlayerJoinListener(this));
 
+        //Commands
         OrdersCommand ordersCommand = new OrdersCommand(this);
-        getCommand("orders").setExecutor(ordersCommand);
-        getCommand("orders").setTabCompleter(ordersCommand);
-
         BuyOrderCommand buyOrderCommand = new BuyOrderCommand(this);
-        getCommand("buyorder").setExecutor(buyOrderCommand);
-        getCommand("buyorder").setTabCompleter(buyOrderCommand);
-
+        
+        if (getCommand("orders") != null) {
+            var cmd = getCommand("orders");
+            cmd.setExecutor(ordersCommand);
+            cmd.setTabCompleter(ordersCommand);
+        }
+        
+        if (getCommand("buyorder") != null) {
+            var cmd = getCommand("buyorder");
+            cmd.setExecutor(buyOrderCommand);
+            cmd.setTabCompleter(buyOrderCommand);
+        }
+        
         getLogger().info("AxOrdersAddon enabled.");
+    }
+
+    private void register(Listener listener) {
+        getServer().getPluginManager().registerEvents(listener, this);
     }
 
     @Override
@@ -50,13 +69,14 @@ public class AxOrdersAddon extends JavaPlugin {
     }
 
     public String msg(String key, String... replacements) {
-        String message = getConfig().getString("messages." + key, "&cMissing message: " + key);
+        String message = getConfig().getString("messages." + key);
+        if (message == null) message = "&cMissing message: " + key;
+    
         for (int i = 0; i + 1 < replacements.length; i += 2) {
             message = message.replace(replacements[i], replacements[i + 1]);
         }
         return color(message);
     }
-
     public static String color(String input) {
         return ChatColor.translateAlternateColorCodes('&', input == null ? "" : input);
     }
