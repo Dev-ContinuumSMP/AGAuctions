@@ -25,18 +25,22 @@ public class OrdersCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        
         if (!(sender instanceof Player player)) {
             sender.sendMessage(plugin.msg("player-only"));
             return true;
         }
+        
         if (!player.hasPermission("axorders.use")) {
             player.sendMessage(plugin.msg("no-permission"));
             return true;
         }
 
         Material filter = null;
+        
         if (args.length > 0) {
             filter = OrderManager.parseMaterial(args[0]);
+            
             if (filter == null || filter.isAir() || !filter.isItem()) {
                 player.sendMessage(plugin.msg("unknown-material", "{material}", args[0]));
                 return true;
@@ -49,11 +53,16 @@ public class OrdersCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length != 1) return Collections.emptyList();
+        
+        if (args.length != 1) 
+            return Collections.emptyList();
+        }
+    
         String typed = args[0].toLowerCase();
+    
         return Arrays.stream(Material.values())
-                .filter(material -> material.isItem() && !material.isAir())
-                .map(material -> material.name().toLowerCase())
+                .filter(material::isItem)
+                .map(m -> m.name().toLowerCase())
                 .filter(name -> name.startsWith(typed))
                 .limit(30)
                 .collect(Collectors.toList());
