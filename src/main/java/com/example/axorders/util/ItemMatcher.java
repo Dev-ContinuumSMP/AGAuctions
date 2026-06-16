@@ -24,6 +24,7 @@ public class ItemMatcher {
             new NamespacedKey("axordersaddon", CUSTOM_ITEM_ID_KEY),
             new NamespacedKey("pyrofishing", "pyro_item")
     );
+    private static final Set<String> DEFAULT_IDENTITY_NAMESPACES = Set.of("mcmmo");
     
     /**
      * Checks if two ItemStacks match exactly, using custom IDs when the required item has one
@@ -38,10 +39,10 @@ public class ItemMatcher {
         if (submitted == null && required == null) return true;
         if (submitted == null || required == null) return false;
 
-        Map<NamespacedKey, String> requiredIds = getIdentityPersistentData(required);
+        Map<NamespacedKey, Object> requiredIds = getIdentityPersistentData(required);
         if (!requiredIds.isEmpty()) {
-            Map<NamespacedKey, String> submittedIds = getIdentityPersistentData(submitted);
-            for (Map.Entry<NamespacedKey, String> requiredId : requiredIds.entrySet()) {
+            Map<NamespacedKey, Object> submittedIds = getIdentityPersistentData(submitted);
+            for (Map.Entry<NamespacedKey, Object> requiredId : requiredIds.entrySet()) {
                 if (!requiredId.getValue().equals(submittedIds.get(requiredId.getKey()))) {
                     return false;
                 }
@@ -71,8 +72,8 @@ public class ItemMatcher {
 
     public static Map<String, String> describeStringPersistentData(ItemStack item) {
         Map<String, String> values = new LinkedHashMap<>();
-        for (Map.Entry<NamespacedKey, String> entry : getIdentityPersistentData(item).entrySet()) {
-            values.put(entry.getKey().toString(), entry.getValue());
+        for (Map.Entry<NamespacedKey, Object> entry : getIdentityPersistentData(item).entrySet()) {
+            values.put(entry.getKey().toString(), String.valueOf(entry.getValue()));
         }
         return values;
     }
@@ -82,13 +83,19 @@ public class ItemMatcher {
         return item.getItemMeta().getPersistentDataContainer().getKeys();
     }
 
-    private static Map<NamespacedKey, String> getIdentityPersistentData(ItemStack item) {
-        Map<NamespacedKey, String> values = new LinkedHashMap<>();
+    private static Map<NamespacedKey, Object> getIdentityPersistentData(ItemStack item) {
+        Map<NamespacedKey, Object> values = new LinkedHashMap<>();
         if (item == null || item.getItemMeta() == null) return values;
 
         PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
         for (NamespacedKey key : getIdentityKeys()) {
-            String value = getString(pdc, key);
+            Object value = getIdentityValue(pdc, key);
+            if (value != null) values.put(key, value);
+        }
+        for (NamespacedKey key : pdc.getKeys()) {
+            if (!getIdentityNamespaces().contains(key.getNamespace())) continue;
+
+            Object value = getIdentityValue(pdc, key);
             if (value != null) values.put(key, value);
         }
         return values;
@@ -113,13 +120,37 @@ public class ItemMatcher {
         return keys;
     }
 
-    private static String getString(PersistentDataContainer pdc, NamespacedKey key) {
-        return pdc.has(key, PersistentDataType.STRING) ? pdc.get(key, PersistentDataType.STRING) : null;
+    private static Set<String> getIdentityNamespaces() {
+        Set<String> namespaces = new HashSet<>(DEFAULT_IDENTITY_NAMESPACES);
+        try {
+            AxOrdersAddon plugin = AxOrdersAddon.getPlugin(AxOrdersAddon.class);
+            for (String configuredKey : plugin.getConfig().getStringList("custom-item-identity-keys")) {
+                String normalized = configuredKey == null ? "" : configuredKey.trim().toLowerCase();
+                if (normalized.endsWith(":*")) {
+                    String namespace = normalized.substring(0, normalized.length() - 2);
+                    if (!namespace.isBlank()) namespaces.add(namespace);
+                }
+            }
+        } catch (IllegalStateException ignored) {
+            // Bukkit may not have a plugin instance in unit-style tests.
+        }
+        return namespaces;
+    }
+
+    private static Object getIdentityValue(PersistentDataContainer pdc, NamespacedKey key) {
+        if (pdc.has(key, PersistentDataType.STRING)) return pdc.get(key, PersistentDataType.STRING);
+        if (pdc.has(key, PersistentDataType.INTEGER)) return pdc.get(key, PersistentDataType.INTEGER);
+        if (pdc.has(key, PersistentDataType.LONG)) return pdc.get(key, PersistentDataType.LONG);
+        if (pdc.has(key, PersistentDataType.DOUBLE)) return pdc.get(key, PersistentDataType.DOUBLE);
+        return null;
     }
 
     private static void logItemComparison(ItemStack submitted, ItemStack required) {
         try {
-            Logger logger = AxOrdersAddon.getPlugin(AxOrdersAddon.class).getLogger();
+            AxOrdersAddon plugin = AxOrdersAddon.getPlugin(AxOrdersAddon.class);
+            if (!plugin.getConfig().getBoolean("debug-item-matching", false)) return;
+
+            Logger logger = plugin.getLogger();
             logger.info("ItemMatcher.matchesCustomItem debug");
             logItem(logger, "REQUIRED ITEM", required);
             logItem(logger, "SUBMITTED ITEM", submitted);
