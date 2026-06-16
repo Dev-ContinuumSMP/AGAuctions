@@ -74,12 +74,7 @@ public class OrderManager {
             for (String key : config.getConfigurationSection("pending").getKeys(false)) {
                 try {
                     UUID uuid = UUID.fromString(key);
-                    List<?> raw = config.getList("pending." + key, Collections.emptyList());
-
-                    List<ItemStack> items = new ArrayList<>();
-                    for (Object o : raw) {
-                        if (o instanceof ItemStack item) items.add(item);
-                    }
+                    List<ItemStack> items = loadPendingItems(config, "pending." + key);
 
                     if (!items.isEmpty()) {
                         pendingDeliveries.put(uuid, items);
@@ -91,7 +86,7 @@ public class OrderManager {
         }
     }
 
-    public synchronized void save() {
+    public synchronized boolean save() {
         YamlConfiguration config = new YamlConfiguration();
 
         for (BuyOrder order : orders.values()) {
@@ -110,25 +105,46 @@ public class OrderManager {
         }
 
         for (Map.Entry<UUID, List<ItemStack>> entry : pendingDeliveries.entrySet()) {
-            config.set("pending." + entry.getKey(), entry.getValue());
+            savePendingItems(config, "pending." + entry.getKey() + ".", entry.getValue());
         }
 
         try {
+            File parent = dataFile.getParentFile();
+            if (parent != null && !parent.exists()) parent.mkdirs();
             config.save(dataFile);
+            return true;
         } catch (IOException ex) {
             plugin.getLogger().log(Level.SEVERE, "Failed saving orders.yml", ex);
+            return false;
         }
     }
 
-    public synchronized void addOrder(BuyOrder order) {
+    public synchronized boolean addOrder(BuyOrder order) {
         orders.put(order.getId(), order);
-        save();
+        if (save()) return true;
+
+        orders.remove(order.getId());
+        return false;
     }
 
     public synchronized List<BuyOrder> getOrders() {
         return orders.values().stream()
                 .filter(o -> !o.isFulfilled())
                 .sorted(Comparator.comparingDouble(BuyOrder::getPriceEach).reversed())
+                .collect(Collectors.toList());
+    }
+
+    public synchronized List<BuyOrder> getOrdersByPlayer(UUID playerUuid) {
+        return orders.values().stream()
+                .filter(o -> !o.isFulfilled())
+                .filter(o -> o.getBuyerUuid().equals(playerUuid))
+                .collect(Collectors.toList());
+    }
+
+    public synchronized List<BuyOrder> getOrdersByMaterial(Material material) {
+        return orders.values().stream()
+                .filter(o -> !o.isFulfilled())
+                .filter(o -> o.getMaterial() == material)
                 .collect(Collectors.toList());
     }
 
@@ -150,11 +166,23 @@ public class OrderManager {
             }
 
             orders.remove(orderId);
-            save();
+            if (!save()) {
+                orders.put(order.getId(), order);
+                save();
+                return plugin.msg("order-save-failed");
+            }
         }
 
-        plugin.getCurrencyManager()
+        boolean refunded = plugin.getCurrencyManager()
                 .give(order.getBuyerUuid(), order.getRemaining() * order.getPriceEach());
+
+        if (!refunded) {
+            synchronized (this) {
+                orders.put(order.getId(), order);
+                save();
+            }
+            return plugin.msg("refund-failed");
+        }
 
         return null;
     }
@@ -229,17 +257,34 @@ public class OrderManager {
 
             if (current == null) {
                 seller.getInventory().addItem(toRemove.toArray(ItemStack[]::new));
-                plugin.getCurrencyManager().give(seller.getUniqueId(), -payment);
+                plugin.getCurrencyManager().take(seller.getUniqueId(), payment);
                 return plugin.msg("order-not-found");
             }
 
+            int previousFilled = current.getQuantityFilled();
             current.setQuantityFilled(current.getQuantityFilled() + amount);
 
+            boolean removedFulfilled = false;
             if (current.isFulfilled()) {
                 orders.remove(orderId);
+                removedFulfilled = true;
             }
 
-            save();
+            List<ItemStack> buyerPending = pendingDeliveries.computeIfAbsent(current.getBuyerUuid(), k -> new ArrayList<>());
+            buyerPending.addAll(toRemove);
+
+            if (!save()) {
+                removeLastAdded(buyerPending, toRemove.size());
+                if (buyerPending.isEmpty()) pendingDeliveries.remove(current.getBuyerUuid());
+
+                current.setQuantityFilled(previousFilled);
+                if (removedFulfilled) orders.put(orderId, current);
+
+                seller.getInventory().addItem(toRemove.toArray(ItemStack[]::new));
+                boolean refunded = plugin.getCurrencyManager().take(seller.getUniqueId(), payment);
+                save();
+                return plugin.msg(refunded ? "order-save-failed" : "refund-failed");
+            }
         }
 
         seller.sendMessage(plugin.msg("order-filled",
@@ -267,13 +312,27 @@ public class OrderManager {
         save();
     }
 
+    private void removeLastAdded(List<ItemStack> items, int amount) {
+        for (int i = 0; i < amount && !items.isEmpty(); i++) {
+            items.remove(items.size() - 1);
+        }
+    }
+
     public synchronized List<ItemStack> getPending(UUID uuid) {
         return new ArrayList<>(pendingDeliveries.getOrDefault(uuid, Collections.emptyList()));
+    }
+
+    public synchronized List<ItemStack> getPendingDeliveries(UUID uuid) {
+        return getPending(uuid);
     }
 
     public synchronized void clearPending(UUID uuid) {
         pendingDeliveries.remove(uuid);
         save();
+    }
+
+    public synchronized void clearPendingDeliveries(UUID uuid) {
+        clearPending(uuid);
     }
 
     private void saveItem(YamlConfiguration config, String path, ItemStack item) {
@@ -307,6 +366,51 @@ public class OrderManager {
         if (!data.isEmpty()) {
             config.set(path + "pdc", data);
         }
+    }
+
+    private void savePendingItems(YamlConfiguration config, String path, List<ItemStack> items) {
+        int index = 0;
+        for (ItemStack item : items) {
+            if (item == null || item.getType().isAir()) continue;
+
+            String itemPath = path + index + ".";
+            config.set(itemPath + "item-stack", item);
+            config.set(itemPath + "amount", item.getAmount());
+            saveItem(config, itemPath + "item-data.", item);
+            index++;
+        }
+    }
+
+    private List<ItemStack> loadPendingItems(YamlConfiguration config, String path) {
+        List<?> legacy = config.getList(path);
+        if (legacy != null) {
+            List<ItemStack> items = new ArrayList<>();
+            for (Object o : legacy) {
+                if (o instanceof ItemStack item) items.add(item);
+            }
+            return items;
+        }
+
+        if (!config.isConfigurationSection(path)) return Collections.emptyList();
+
+        List<ItemStack> items = new ArrayList<>();
+        for (String key : config.getConfigurationSection(path).getKeys(false)) {
+            try {
+                String itemPath = path + "." + key + ".";
+                ItemStack item = config.getItemStack(itemPath + "item-stack");
+                if (item == null) {
+                    Material material = Material.valueOf(config.getString(itemPath + "item-data.material"));
+                    item = new ItemStack(material);
+                }
+
+                restoreItem(config, itemPath + "item-data.", item);
+                item.setAmount(Math.max(1, config.getInt(itemPath + "amount", item.getAmount())));
+                items.add(item);
+            } catch (Exception ex) {
+                plugin.getLogger().log(Level.WARNING, "Failed to load pending item " + path + "." + key, ex);
+            }
+        }
+        return items;
     }
 
     private void restoreItem(YamlConfiguration config, String path, ItemStack item) {
@@ -368,5 +472,15 @@ public class OrderManager {
         ItemMeta meta = item.getItemMeta();
         if (meta != null && meta.hasDisplayName()) return meta.getDisplayName();
         return item.getType().name().toLowerCase().replace("_", " ");
+    }
+
+    public static Material parseMaterial(String input) {
+        if (input == null || input.isBlank()) return null;
+        return Material.matchMaterial(input.trim());
+    }
+
+    public static String materialName(Material material) {
+        if (material == null) return "unknown";
+        return material.name().toLowerCase().replace("_", " ");
     }
 }
