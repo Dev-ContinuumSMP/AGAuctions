@@ -124,7 +124,11 @@ public class BuyOrderCommand implements CommandExecutor, TabCompleter {
                 System.currentTimeMillis()
         );
 
-        plugin.getOrderManager().addOrder(order);
+        if (!plugin.getOrderManager().addOrder(order)) {
+            boolean refunded = plugin.getCurrencyManager().give(player.getUniqueId(), total);
+            player.sendMessage(plugin.msg(refunded ? "order-save-failed" : "refund-failed"));
+            return true;
+        }
 
         player.sendMessage(plugin.msg("order-created",
                 "{amount}", String.valueOf(amount),
