@@ -14,20 +14,43 @@ public class CurrencyManager {
     
     private final AxOrdersAddon plugin;
     private CurrencyHook hook;
+    private boolean warnedEmptyRegistry;
 
     public CurrencyManager(AxOrdersAddon plugin) {
         this.plugin = plugin;
     }
 
+    public void init() {
+        reload();
+    }
+
+    public CurrencyHook getHook() {
+        if (hook == null) {
+            reload();
+        }
+        return hook;
+    }
+
     public void reload() {
         Map<String, CurrencyHook> registry = AxAuctionsAPI.getRegistry();
-        String configured = plugin.getConfig().getString("currency", "vault");
+        String configured = plugin.getConfig().getString("currency", "Vault").trim();
+
+        if (registry == null || registry.isEmpty()) {
+            if (!warnedEmptyRegistry) {
+                plugin.getLogger().warning("AxAuctions currency registry is empty. Will retry when currency is needed.");
+                warnedEmptyRegistry = true;
+            }
+            this.hook = null;
+            return;
+        }
     
         CurrencyHook found = registry.get(configured);
     
         if (found == null) {
             for (Map.Entry<String, CurrencyHook> entry : registry.entrySet()) {
-                if (entry.getKey().equalsIgnoreCase(configured)) {
+                String hookName = entry.getValue() == null ? "" : entry.getValue().getName();
+                if (entry.getKey().equalsIgnoreCase(configured)
+                        || hookName.equalsIgnoreCase(configured)) {
                     found = entry.getValue();
                     break;
                 }
@@ -39,11 +62,20 @@ public class CurrencyManager {
         }
     
         this.hook = found;
+        warnedEmptyRegistry = false;
+
+        if (hook == null) {
+            plugin.getLogger().warning("Could not find AxAuctions currency '" + configured
+                    + "'. Available currencies: " + String.join(", ", registry.keySet()));
+        } else {
+            plugin.getLogger().info("Using AxAuctions currency hook: " + hook.getName());
+        }
     }
 
     public boolean has(UUID player, double amount) {
         try {
-            return hook != null && hook.getBalance(player) >= amount;
+            CurrencyHook current = getHook();
+            return current != null && current.getBalance(player) >= amount;
         } catch (Exception e) {
             plugin.getLogger().warning("Currency check failed: " + e.getMessage());
             return false;
@@ -51,7 +83,8 @@ public class CurrencyManager {
     }
     public boolean take(UUID player, double amount) {
         try {
-            return hook != null && hook.takeBalance(player, amount).join();
+            CurrencyHook current = getHook();
+            return current != null && current.takeBalance(player, amount).join();
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to take AxAuctions currency balance: " + e.getMessage());
             return false;
@@ -60,16 +93,19 @@ public class CurrencyManager {
 
     public boolean give(UUID player, double amount) {
         try {
-            return hook != null && hook.giveBalance(player, amount).join();
+            CurrencyHook current = getHook();
+            return current != null && current.giveBalance(player, amount).join();
         } catch (Exception exception) {
-            plugin.getLogger().warning("Failed to give AxAuctions currency balance: " + e.getMessage());
+            plugin.getLogger().warning("Failed to give AxAuctions currency balance: " + exception.getMessage());
             return false;
         }
     }
 
     public String format(double amount) {
-    String currency = hook == null
-        ? plugin.getConfig().getString("currency", "money")
-        : hook.getName();
-    return FORMAT.format(amount) + " " + currency;
+        String currency = hook == null
+                ? plugin.getConfig().getString("currency", "money")
+                : hook.getName();
+
+        return FORMAT.format(amount) + " " + currency;
+    }
 }
