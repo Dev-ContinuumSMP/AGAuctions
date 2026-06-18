@@ -3,6 +3,7 @@ package com.example.axorders.manager;
 import com.artillexstudios.axauctions.api.AxAuctionsAPI;
 import com.artillexstudios.axauctions.hooks.currency.CurrencyHook;
 import com.example.axorders.AxOrdersAddon;
+import org.bukkit.Bukkit;
 
 import java.text.DecimalFormat;
 import java.util.Map;
@@ -15,29 +16,38 @@ public class CurrencyManager {
     private final AxOrdersAddon plugin;
     private CurrencyHook hook;
     private boolean warnedEmptyRegistry;
+    private boolean loggedHook;
 
     public CurrencyManager(AxOrdersAddon plugin) {
         this.plugin = plugin;
     }
 
     public void init() {
-        reload();
+        reload(false);
+        scheduleRetry(20L);
+        scheduleRetry(100L);
+        scheduleRetry(200L);
     }
 
     public CurrencyHook getHook() {
         if (hook == null) {
-            reload();
+            reload(true);
         }
         return hook;
     }
 
     public void reload() {
+        reload(true);
+    }
+
+    private void reload(boolean warn) {
         Map<String, CurrencyHook> registry = AxAuctionsAPI.getRegistry();
         String configured = plugin.getConfig().getString("currency", "Vault").trim();
 
         if (registry == null || registry.isEmpty()) {
-            if (!warnedEmptyRegistry) {
-                plugin.getLogger().warning("AxAuctions currency registry is empty. Will retry when currency is needed.");
+            if (warn && !warnedEmptyRegistry) {
+                plugin.getLogger().warning("AxAuctions has not registered any currency hooks yet. "
+                        + "If you use Vault, make sure both Vault and an economy plugin are installed, then restart.");
                 warnedEmptyRegistry = true;
             }
             this.hook = null;
@@ -57,19 +67,36 @@ public class CurrencyManager {
             }
         }
     
+        String fallbackKey = null;
         if (found == null && !registry.isEmpty()) {
-            found = registry.values().iterator().next();
+            Map.Entry<String, CurrencyHook> fallback = registry.entrySet().iterator().next();
+            fallbackKey = fallback.getKey();
+            found = fallback.getValue();
         }
     
         this.hook = found;
         warnedEmptyRegistry = false;
 
         if (hook == null) {
-            plugin.getLogger().warning("Could not find AxAuctions currency '" + configured
-                    + "'. Available currencies: " + String.join(", ", registry.keySet()));
-        } else {
+            if (warn) {
+                plugin.getLogger().warning("Could not find AxAuctions currency '" + configured
+                        + "'. Available currencies: " + String.join(", ", registry.keySet()));
+            }
+        } else if (fallbackKey != null && warn) {
+            plugin.getLogger().warning("AxAuctions currency '" + configured + "' is not available. "
+                    + "Defaulting to '" + hook.getName() + "' (" + fallbackKey + "). Available currencies: "
+                    + String.join(", ", registry.keySet()));
+        } else if (!loggedHook) {
             plugin.getLogger().info("Using AxAuctions currency hook: " + hook.getName());
+            loggedHook = true;
         }
+    }
+
+    private void scheduleRetry(long delayTicks) {
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!plugin.isEnabled() || hook != null) return;
+            reload(delayTicks >= 200L);
+        }, delayTicks);
     }
 
     public boolean has(UUID player, double amount) {
