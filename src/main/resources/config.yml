@@ -1,4 +1,7 @@
-currency: "Vault"
+currency:
+  axauctions:
+    enabled: false
+    currency: "Vault"
 max-orders-per-player: 5
 store-name: "&6&lBuy Orders"
 debug-item-matching: false
@@ -118,20 +121,107 @@ gui:
       - "&eRemaining: &f{remaining}&7/&f{wanted}"
       - "&ePrice Each: &a{price_each}"
       - "&eYour Items: &f{your_items}"
-      - "&ePayout Now: &a{payout}"
+      - "&eMax Fill: &f{max_fill_amount}"
+      - "&eMax Payout: &a{max_payout}"
       - ""
     actions:
       own-order:
         - "&7Right-click to &ccancel"
       can-fill:
-        - "&7Left-click to &afill {fill_amount}"
+        - "&7Left-click to &aopen fill menu"
       no-items:
         - "&cYou do not have this item"
       admin:
         - "&7Right-click to &ccancel as admin"
 
+fill-gui:
+  title: "&6Fill {material}"
+  rows: 6
+  deposit-slots:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+    - 22
+    - 23
+    - 24
+    - 25
+    - 26
+    - 27
+    - 28
+    - 29
+    - 30
+    - 31
+    - 32
+    - 33
+    - 34
+    - 35
+    - 36
+    - 37
+    - 38
+    - 39
+    - 40
+    - 41
+    - 42
+    - 43
+    - 44
+  filler:
+    enabled: true
+    slots:
+      - 45
+      - 46
+      - 47
+      - 51
+      - 52
+      - 53
+    material: "GRAY_STAINED_GLASS_PANE"
+    amount: 1
+    name: " "
+    lore: []
+  controls:
+    cancel:
+      slot: 48
+      material: "BARRIER"
+      amount: 1
+      name: "&cCancel"
+      lore:
+        - "&7Returns deposited items"
+    info:
+      slot: 49
+      material: "PAPER"
+      amount: 1
+      name: "&eDeposited: &f{deposited}&7/&f{remaining}"
+      lore:
+        - "&ePrice Each: &a{price_each}"
+        - "&ePayout: &a{payout}"
+    confirm:
+      slot: 50
+      material: "EMERALD_BLOCK"
+      amount: 1
+      name: "&aConfirm Sale"
+      lore:
+        - "&7Sell deposited matching items"
+
 messages:
-  reloaded: "&aAxOrders config reloaded."
+  reloaded: "&aBuyOrders config reloaded."
   no-permission: "&cYou do not have permission."
   player-only: "&cOnly players can use this command."
   unknown-material: "&cUnknown material: &e{material}"
@@ -141,9 +231,11 @@ messages:
   order-filled: "&aFilled &e{amount}x {material} &afor &e{payment}&a."
   order-cancelled: "&aOrder cancelled."
   order-not-found: "&cOrder not found."
-  no-currency-hook: "&cNo AxAuctions currency hook is available. Check the currency setting."
+  no-currency-hook: "&cNo currency provider is available."
   not-enough-money: "&cYou need &e{amount} &cto create that order."
   order-save-failed: "&cCould not save that buy order. Your money/items were refunded."
   refund-failed: "&cSomething failed and the automatic refund could not fully complete. Contact an admin."
   own-order: "&cYou cannot fill your own order."
   no-items: "&cYou do not have any &e{material}&c."
+  not-enough-items: "&cYou only have &e{available}x {material}&c."
+  fill-invalid-item: "&cThat item does not match this buy order."

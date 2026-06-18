@@ -1,17 +1,17 @@
-name: AxOrdersAddon
-version: 1.0.2
+name: BuyOrders
+version: 1.1.0
 main: com.example.axorders.AxOrdersAddon
 api-version: '1.21'
 folia-supported: true
-description: Standalone buy orders addon for AxAuctions
+description: Standalone buy orders plugin
 authors: [ Johnny ]
-depend: [ AxAuctions ]
+softdepend: [ Vault, AxAuctions ]
 libraries:
   - com.h2database:h2:2.3.232
 
 commands:
   orders:
-    description: Open the AxAuctions buy orders GUI
+    description: Open the buy orders GUI
     usage: /orders [material|reload]
     aliases: [ order ]
 
@@ -32,4 +32,3 @@ permissions:
   axorders.admin:
     description: Allows admins to cancel any order
     default: op
-
