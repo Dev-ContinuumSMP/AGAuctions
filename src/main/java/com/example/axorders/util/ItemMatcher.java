@@ -26,11 +26,10 @@ public class ItemMatcher {
     );
     private static final Set<String> DEFAULT_IDENTITY_NAMESPACES = Set.of("mcmmo");
     
-
     public static boolean matchesCustomItem(ItemStack submitted, ItemStack required) {
         logItemComparison(submitted, required);
 
-
+        // Handle null items
         if (submitted == null && required == null) return true;
         if (submitted == null || required == null) return false;
 
@@ -46,11 +45,9 @@ public class ItemMatcher {
             return submitted.getType() == required.getType();
         }
 
-   
         return submitted.isSimilar(required);
     }
     
-
     public static String getCustomItemId(ItemStack item) {
         if (item == null || item.getItemMeta() == null) return null;
         
@@ -125,7 +122,7 @@ public class ItemMatcher {
                 }
             }
         } catch (IllegalStateException ignored) {
-
+            
         }
         return namespaces;
     }
@@ -162,7 +159,6 @@ public class ItemMatcher {
         logger.info("PDC keys: " + getPersistentDataKeys(item));
     }
     
-
     private static boolean listsEqual(java.util.List<String> list1, java.util.List<String> list2) {
         if (list1 == null && list2 == null) return true;
         if (list1 == null || list2 == null) return false;
@@ -174,15 +170,14 @@ public class ItemMatcher {
         return true;
     }
     
-
     private static boolean enchantmentsEqual(ItemMeta meta1, ItemMeta meta2) {
-
+        // If both have no enchantments, they match
         if (!meta1.hasEnchants() && !meta2.hasEnchants()) return true;
         
-
+        // If only one has enchantments, they don't match
         if (meta1.hasEnchants() != meta2.hasEnchants()) return false;
         
-
+        // Compare enchantments
         java.util.Set<org.bukkit.enchantments.Enchantment> enchants1 = meta1.getEnchants().keySet();
         java.util.Set<org.bukkit.enchantments.Enchantment> enchants2 = meta2.getEnchants().keySet();
         
@@ -196,12 +191,10 @@ public class ItemMatcher {
         return true;
     }
     
-
     public static String createCustomItemId() {
         return "custom_item_" + UUID.randomUUID().toString().replace("-", "");
     }
     
-
     public static void assignCustomId(ItemStack item, String customId) {
         if (item == null || item.getItemMeta() == null) return;
         
