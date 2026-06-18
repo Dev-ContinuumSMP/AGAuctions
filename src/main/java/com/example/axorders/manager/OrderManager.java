@@ -31,6 +31,16 @@ import java.util.stream.Collectors;
 
 public class OrderManager {
 
+    public record FillResult(String error, List<ItemStack> rejectedItems) {
+        public static FillResult error(String error, List<ItemStack> rejectedItems) {
+            return new FillResult(error, rejectedItems == null ? List.of() : rejectedItems);
+        }
+
+        public static FillResult success(List<ItemStack> rejectedItems) {
+            return new FillResult(null, rejectedItems == null ? List.of() : rejectedItems);
+        }
+    }
+
     private final AxOrdersAddon plugin;
     private final File legacyDataFile;
     private final File databaseFile;
@@ -399,6 +409,11 @@ public class OrderManager {
     }
 
     public String fillOrder(Player seller, UUID orderId) {
+        return fillOrder(seller, orderId, Integer.MAX_VALUE);
+    }
+
+    public String fillOrder(Player seller, UUID orderId, int requestedAmount) {
+        if (requestedAmount <= 0) return plugin.msg("invalid-amount");
 
         BuyOrder order;
 
@@ -418,7 +433,7 @@ public class OrderManager {
         if (available <= 0)
             return plugin.msg("no-items", "{material}", itemName(order.getItemTemplate()));
 
-        int amount = Math.min(available, order.getRemaining());
+        int amount = Math.min(requestedAmount, Math.min(available, order.getRemaining()));
         if (amount <= 0)
             return plugin.msg("no-items");
 
@@ -504,6 +519,140 @@ public class OrderManager {
                 "{payment}", plugin.getCurrencyManager().format(payment)));
 
         return null;
+    }
+
+    public FillResult fillOrder(Player seller, UUID orderId, List<ItemStack> offeredItems) {
+        List<ItemStack> offered = cloneItems(offeredItems);
+
+        BuyOrder order;
+        int remainingWanted;
+
+        synchronized (this) {
+            order = orders.get(orderId);
+
+            if (order == null) return FillResult.error(plugin.msg("order-not-found"), offered);
+
+            if (order.getBuyerUuid().equals(seller.getUniqueId()))
+                return FillResult.error(plugin.msg("own-order"), offered);
+
+            if (order.isFulfilled())
+                return FillResult.error(plugin.msg("order-not-found"), offered);
+
+            remainingWanted = order.getRemaining();
+        }
+
+        if (offered.isEmpty()) {
+            return FillResult.error(plugin.msg("no-items", "{material}", itemName(order.getItemTemplate())), List.of());
+        }
+
+        List<ItemStack> accepted = new ArrayList<>();
+        List<ItemStack> rejected = new ArrayList<>();
+        int acceptedAmount = splitAcceptedItems(offered, order.getItemTemplate(), remainingWanted, accepted, rejected);
+
+        if (acceptedAmount <= 0) {
+            return FillResult.error(plugin.msg("no-items", "{material}", itemName(order.getItemTemplate())), rejected);
+        }
+
+        double payment = acceptedAmount * order.getPriceEach();
+        boolean paid = plugin.getCurrencyManager().give(seller.getUniqueId(), payment);
+        if (!paid) return FillResult.error(plugin.msg("no-currency-hook"), offered);
+
+        synchronized (this) {
+            BuyOrder current = orders.get(orderId);
+
+            if (current == null || current.isFulfilled()) {
+                plugin.getCurrencyManager().take(seller.getUniqueId(), payment);
+                return FillResult.error(plugin.msg("order-not-found"), offered);
+            }
+
+            if (acceptedAmount > current.getRemaining()) {
+                List<ItemStack> trimmedAccepted = new ArrayList<>();
+                List<ItemStack> trimmedRejected = new ArrayList<>(rejected);
+                int trimmedAmount = splitAcceptedItems(accepted, current.getItemTemplate(), current.getRemaining(), trimmedAccepted, trimmedRejected);
+
+                plugin.getCurrencyManager().take(seller.getUniqueId(), payment);
+                payment = trimmedAmount * current.getPriceEach();
+                if (trimmedAmount <= 0 || !plugin.getCurrencyManager().give(seller.getUniqueId(), payment)) {
+                    return FillResult.error(trimmedAmount <= 0 ? plugin.msg("order-not-found") : plugin.msg("no-currency-hook"), offered);
+                }
+
+                accepted = trimmedAccepted;
+                rejected = trimmedRejected;
+                acceptedAmount = trimmedAmount;
+            }
+
+            int previousFilled = current.getQuantityFilled();
+            current.setQuantityFilled(previousFilled + acceptedAmount);
+
+            boolean removedFulfilled = false;
+            if (current.isFulfilled()) {
+                orders.remove(orderId);
+                removedFulfilled = true;
+            }
+
+            List<ItemStack> buyerPending = pendingDeliveries.computeIfAbsent(current.getBuyerUuid(), k -> new ArrayList<>());
+            buyerPending.addAll(cloneItems(accepted));
+
+            if (!save()) {
+                removeLastAdded(buyerPending, accepted.size());
+                if (buyerPending.isEmpty()) pendingDeliveries.remove(current.getBuyerUuid());
+
+                current.setQuantityFilled(previousFilled);
+                if (removedFulfilled) orders.put(orderId, current);
+
+                boolean refunded = plugin.getCurrencyManager().take(seller.getUniqueId(), payment);
+                save();
+                return FillResult.error(plugin.msg(refunded ? "order-save-failed" : "refund-failed"), offered);
+            }
+        }
+
+        seller.sendMessage(plugin.msg("order-filled",
+                "{amount}", String.valueOf(acceptedAmount),
+                "{material}", itemName(order.getItemTemplate()),
+                "{payment}", plugin.getCurrencyManager().format(payment)));
+
+        return FillResult.success(rejected);
+    }
+
+    private int splitAcceptedItems(List<ItemStack> source, ItemStack template, int maxAmount,
+                                   List<ItemStack> accepted, List<ItemStack> rejected) {
+        int remaining = Math.max(0, maxAmount);
+        int acceptedAmount = 0;
+
+        for (ItemStack item : source) {
+            if (item == null || item.getType().isAir()) continue;
+
+            if (!ItemMatcher.matchesCustomItem(item, template) || remaining <= 0) {
+                rejected.add(item.clone());
+                continue;
+            }
+
+            int take = Math.min(item.getAmount(), remaining);
+            ItemStack acceptedCopy = item.clone();
+            acceptedCopy.setAmount(take);
+            accepted.add(acceptedCopy);
+            acceptedAmount += take;
+            remaining -= take;
+
+            int leftover = item.getAmount() - take;
+            if (leftover > 0) {
+                ItemStack rejectedCopy = item.clone();
+                rejectedCopy.setAmount(leftover);
+                rejected.add(rejectedCopy);
+            }
+        }
+
+        return acceptedAmount;
+    }
+
+    private List<ItemStack> cloneItems(List<ItemStack> items) {
+        if (items == null || items.isEmpty()) return List.of();
+        List<ItemStack> clones = new ArrayList<>();
+        for (ItemStack item : items) {
+            if (item == null || item.getType().isAir()) continue;
+            clones.add(item.clone());
+        }
+        return clones;
     }
 
     private int countItems(Player player, ItemStack template) {
@@ -641,4 +790,3 @@ public class OrderManager {
         return material.name().toLowerCase().replace("_", " ");
     }
 }
-
