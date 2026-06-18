@@ -15,19 +15,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public class OrdersGUI implements InventoryHolder {
 
     public enum SortMode {
         PRICE_DESC, PRICE_ASC, NEWEST, OLDEST
     }
-
-    private static final int ITEMS_PER_PAGE = 45;
-    private static final int SLOT_PREVIOUS = 45;
-    private static final int SLOT_SORT = 46;
-    private static final int SLOT_INFO = 49;
-    private static final int SLOT_REFRESH = 50;
-    private static final int SLOT_NEXT = 53;
 
     private final AxOrdersAddon plugin;
     private final Player player;
@@ -52,40 +46,42 @@ public class OrdersGUI implements InventoryHolder {
     }
 
     public Inventory buildInventory() {
-        String baseTitle = plugin.getConfig().getString("gui-title", "&6&lBuy Orders");
-        String title = filter == null ? baseTitle : baseTitle + " &8- &b" + OrderManager.materialName(filter);
-        Inventory inv = Bukkit.createInventory(this, 54, AxOrdersAddon.color(title));
+        List<Integer> orderSlots = getOrderSlots();
+        int itemsPerPage = orderSlots.size();
+        String titlePath = filter == null ? "gui.title" : "gui.filtered-title";
+        Inventory inv = Bukkit.createInventory(this, getInventorySize(), color(applyGlobalPlaceholders(configString(titlePath, "{store_name}"))));
         this.inventory = inv;
 
         List<BuyOrder> orders = getOrders();
-        int totalPages = Math.max(1, (int) Math.ceil(orders.size() / (double) ITEMS_PER_PAGE));
+        int totalPages = Math.max(1, (int) Math.ceil(orders.size() / (double) itemsPerPage));
         if (page >= totalPages) page = totalPages - 1;
         if (page < 0) page = 0;
 
-        int start = page * ITEMS_PER_PAGE;
-        int end = Math.min(start + ITEMS_PER_PAGE, orders.size());
+        int start = page * itemsPerPage;
+        int end = Math.min(start + itemsPerPage, orders.size());
         for (int index = start; index < end; index++) {
-            inv.setItem(index - start, buildOrderItem(orders.get(index)));
+            inv.setItem(orderSlots.get(index - start), buildOrderItem(orders.get(index)));
         }
 
-        ItemStack filler = makeFiller();
-        for (int slot = 45; slot < 54; slot++) {
-            if (slot == SLOT_PREVIOUS ||
-                slot == SLOT_SORT ||
-                slot == SLOT_INFO ||
-                slot == SLOT_REFRESH ||
-                slot == SLOT_NEXT) continue;
-        
-            inv.setItem(slot, filler);
+        if (plugin.getConfig().getBoolean("gui.filler.enabled", true)) {
+            ItemStack filler = makeConfiguredItem("gui.filler", Map.of());
+            for (int slot : plugin.getConfig().getIntegerList("gui.filler.slots")) {
+                if (slot >= 0 && slot < inv.getSize()) inv.setItem(slot, filler);
+            }
         }
 
-        if (page > 0) inv.setItem(SLOT_PREVIOUS, makeControl(Material.ARROW, "&ePrevious Page"));
-        inv.setItem(SLOT_SORT, makeControl(Material.HOPPER, "&eSort: &b" + sortLabel(), "&7Click to cycle"));
-        inv.setItem(SLOT_INFO, makeControl(Material.PAPER,
-                "&fPage &e" + (page + 1) + "&f/&e" + totalPages,
-                "&7" + orders.size() + " open order(s)"));
-        inv.setItem(SLOT_REFRESH, makeControl(Material.SUNFLOWER, "&aRefresh"));
-        if (page < totalPages - 1) inv.setItem(SLOT_NEXT, makeControl(Material.ARROW, "&eNext Page"));
+        Map<String, String> pagePlaceholders = Map.of(
+                "{page}", String.valueOf(page + 1),
+                "{total_pages}", String.valueOf(totalPages),
+                "{order_count}", String.valueOf(orders.size()),
+                "{sort}", sortLabel()
+        );
+
+        if (page > 0) setControl(inv, "previous", pagePlaceholders);
+        setControl(inv, "sort", pagePlaceholders);
+        setControl(inv, "info", pagePlaceholders);
+        setControl(inv, "refresh", pagePlaceholders);
+        if (page < totalPages - 1) setControl(inv, "next", pagePlaceholders);
 
         return inv;
     }
@@ -97,11 +93,14 @@ public class OrdersGUI implements InventoryHolder {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
         
-        if (!meta.hasDisplayName()) {
-            meta.setDisplayName(AxOrdersAddon.color(
-                    "&b" + OrderManager.materialName(order.getMaterial()) +
-                    " &8#" + order.getShortId()
-            ));
+        boolean preserveName = plugin.getConfig().getBoolean("gui.order-item.preserve-template-name", true);
+        if (!preserveName || !meta.hasDisplayName()) {
+            meta.setDisplayName(color(applyOrderPlaceholders(
+                    configString("gui.order-item.name", "&b{material} &8#{id}"),
+                    order,
+                    0,
+                    0
+            )));
         }
 
         item.setItemMeta(meta);
@@ -110,22 +109,42 @@ public class OrdersGUI implements InventoryHolder {
         int fillAmount = Math.min(available, order.getRemaining());
         double payout = fillAmount * order.getPriceEach();
 
-        List<String> lore = new ArrayList<>();
-        lore.add(AxOrdersAddon.color("&eBuyer: &f" + order.getBuyerName()));
-        lore.add(AxOrdersAddon.color("&eRemaining: &f" + order.getRemaining() + "&7/&f" + order.getQuantityWanted()));
-        lore.add(AxOrdersAddon.color("&ePrice Each: &a" + plugin.getCurrencyManager().format(order.getPriceEach())));
-        lore.add(AxOrdersAddon.color("&eYour Items: &f" + available));
-        lore.add(AxOrdersAddon.color("&ePayout Now: &a" + plugin.getCurrencyManager().format(payout)));
-        lore.add("");
+        List<String> lore = colorLines(applyOrderPlaceholders(
+                plugin.getConfig().getStringList("gui.order-item.lore"),
+                order,
+                available,
+                payout
+        ));
+
         if (order.getBuyerUuid().equals(player.getUniqueId())) {
-            lore.add(AxOrdersAddon.color("&7Right-click to &ccancel"));
+            lore.addAll(colorLines(applyOrderPlaceholders(
+                    plugin.getConfig().getStringList("gui.order-item.actions.own-order"),
+                    order,
+                    available,
+                    payout
+            )));
         } else if (fillAmount > 0) {
-            lore.add(AxOrdersAddon.color("&7Left-click to &afill " + fillAmount));
+            lore.addAll(colorLines(applyOrderPlaceholders(
+                    plugin.getConfig().getStringList("gui.order-item.actions.can-fill"),
+                    order,
+                    available,
+                    payout
+            ).stream().map(line -> line.replace("{fill_amount}", String.valueOf(fillAmount))).toList()));
         } else {
-            lore.add(AxOrdersAddon.color("&cYou do not have this item"));
+            lore.addAll(colorLines(applyOrderPlaceholders(
+                    plugin.getConfig().getStringList("gui.order-item.actions.no-items"),
+                    order,
+                    available,
+                    payout
+            )));
         }
         if (player.hasPermission("axorders.admin") && !order.getBuyerUuid().equals(player.getUniqueId())) {
-            lore.add(AxOrdersAddon.color("&7Right-click to &ccancel as admin"));
+            lore.addAll(colorLines(applyOrderPlaceholders(
+                    plugin.getConfig().getStringList("gui.order-item.actions.admin"),
+                    order,
+                    available,
+                    payout
+            )));
         }
         meta.setLore(lore);
         item.setItemMeta(meta);
@@ -158,42 +177,46 @@ public class OrdersGUI implements InventoryHolder {
         return count;
     }
 
-    private ItemStack makeControl(Material material, String name, String... loreLines) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) return item;
-    
-        meta.setDisplayName(AxOrdersAddon.color(name));
-    
-        List<String> lore = new ArrayList<>();
-        for (String line : loreLines) lore.add(AxOrdersAddon.color(line));
-    
-        meta.setLore(lore);
-        item.setItemMeta(meta);
-        return item;
+    private void setControl(Inventory inv, String key, Map<String, String> placeholders) {
+        int slot = getControlSlot(key);
+        if (slot < 0 || slot >= inv.getSize()) return;
+        inv.setItem(slot, makeConfiguredItem("gui.controls." + key, placeholders));
     }
 
-    private ItemStack makeFiller() {
-        ItemStack item = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+    private ItemStack makeConfiguredItem(String path, Map<String, String> placeholders) {
+        Material material = Material.matchMaterial(configString(path + ".material", "STONE"));
+        if (material == null || material.isAir()) material = Material.STONE;
+        int amount = Math.max(1, Math.min(64, plugin.getConfig().getInt(path + ".amount", 1)));
+        ItemStack item = new ItemStack(material, amount);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
-        meta.setDisplayName(" ");
+
+        meta.setDisplayName(color(applyPlaceholders(configString(path + ".name", " "), placeholders)));
+        meta.setLore(colorLines(applyPlaceholders(plugin.getConfig().getStringList(path + ".lore"), placeholders)));
+
+        if (plugin.getConfig().isSet(path + ".custom-model-data")) {
+            meta.setCustomModelData(plugin.getConfig().getInt(path + ".custom-model-data"));
+        }
+
         item.setItemMeta(meta);
         return item;
     }
 
     private String sortLabel() {
-        return switch (sortMode) {
+        String key = switch (sortMode) {
             case PRICE_DESC -> "Highest Price";
             case PRICE_ASC -> "Lowest Price";
             case NEWEST -> "Newest";
             case OLDEST -> "Oldest";
         };
+        return configString("gui.sort-labels." + sortMode.name().toLowerCase(), key);
     }
 
     public BuyOrder getOrderAtSlot(int slot) {
-        if (slot < 0 || slot >= ITEMS_PER_PAGE) return null;
-        int index = page * ITEMS_PER_PAGE + slot;
+        List<Integer> orderSlots = getOrderSlots();
+        int slotIndex = orderSlots.indexOf(slot);
+        if (slotIndex < 0) return null;
+        int index = page * orderSlots.size() + slotIndex;
         List<BuyOrder> orders = getOrders();
         return index >= orders.size() ? null : orders.get(index);
     }
@@ -203,7 +226,7 @@ public class OrdersGUI implements InventoryHolder {
     }
 
     public void nextPage() {
-        int totalPages = Math.max(1, (int) Math.ceil(getOrders().size() / (double) ITEMS_PER_PAGE));
+        int totalPages = Math.max(1, (int) Math.ceil(getOrders().size() / (double) getOrderSlots().size()));
         if (page < totalPages - 1) page++;
     }
 
@@ -213,8 +236,97 @@ public class OrdersGUI implements InventoryHolder {
         page = 0;
     }
 
-    public int getSlotPrevious() { return SLOT_PREVIOUS; }
-    public int getSlotSort() { return SLOT_SORT; }
-    public int getSlotRefresh() { return SLOT_REFRESH; }
-    public int getSlotNext() { return SLOT_NEXT; }
+    public int getSlotPrevious() { return getControlSlot("previous"); }
+    public int getSlotSort() { return getControlSlot("sort"); }
+    public int getSlotRefresh() { return getControlSlot("refresh"); }
+    public int getSlotNext() { return getControlSlot("next"); }
+
+    private int getInventorySize() {
+        int rows = Math.max(1, Math.min(6, plugin.getConfig().getInt("gui.rows", 6)));
+        return rows * 9;
+    }
+
+    private List<Integer> getOrderSlots() {
+        List<Integer> slots = plugin.getConfig().getIntegerList("gui.order-slots");
+        int size = getInventorySize();
+        if (slots.isEmpty()) {
+            int max = Math.min(45, size);
+            for (int slot = 0; slot < max; slot++) slots.add(slot);
+        }
+        List<Integer> configuredSlots = slots.stream()
+                .filter(slot -> slot >= 0 && slot < size)
+                .distinct()
+                .toList();
+        if (!configuredSlots.isEmpty()) return configuredSlots;
+
+        List<Integer> fallbackSlots = new ArrayList<>();
+        int max = Math.min(45, size);
+        for (int slot = 0; slot < max; slot++) fallbackSlots.add(slot);
+        return fallbackSlots;
+    }
+
+    private int getControlSlot(String key) {
+        return plugin.getConfig().getInt("gui.controls." + key + ".slot", switch (key) {
+            case "previous" -> 45;
+            case "sort" -> 46;
+            case "info" -> 49;
+            case "refresh" -> 50;
+            case "next" -> 53;
+            default -> -1;
+        });
+    }
+
+    private String configString(String path, String fallback) {
+        String value = plugin.getConfig().getString(path);
+        return value == null ? fallback : value;
+    }
+
+    private String applyGlobalPlaceholders(String line) {
+        return line
+                .replace("{store_name}", configString("store-name", "&6&lBuy Orders"))
+                .replace("{filter}", filter == null ? "" : OrderManager.materialName(filter));
+    }
+
+    private List<String> applyPlaceholders(List<String> lines, Map<String, String> placeholders) {
+        List<String> replaced = new ArrayList<>();
+        for (String line : lines) replaced.add(applyPlaceholders(line, placeholders));
+        return replaced;
+    }
+
+    private String applyPlaceholders(String line, Map<String, String> placeholders) {
+        String replaced = applyGlobalPlaceholders(line);
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            replaced = replaced.replace(entry.getKey(), entry.getValue());
+        }
+        return replaced;
+    }
+
+    private List<String> applyOrderPlaceholders(List<String> lines, BuyOrder order, int available, double payout) {
+        List<String> replaced = new ArrayList<>();
+        for (String line : lines) replaced.add(applyOrderPlaceholders(line, order, available, payout));
+        return replaced;
+    }
+
+    private String applyOrderPlaceholders(String line, BuyOrder order, int available, double payout) {
+        return applyGlobalPlaceholders(line)
+                .replace("{id}", order.getShortId())
+                .replace("{buyer}", order.getBuyerName())
+                .replace("{material}", OrderManager.materialName(order.getMaterial()))
+                .replace("{remaining}", String.valueOf(order.getRemaining()))
+                .replace("{wanted}", String.valueOf(order.getQuantityWanted()))
+                .replace("{filled}", String.valueOf(order.getQuantityFilled()))
+                .replace("{price_each}", plugin.getCurrencyManager().format(order.getPriceEach()))
+                .replace("{your_items}", String.valueOf(available))
+                .replace("{payout}", plugin.getCurrencyManager().format(payout));
+    }
+
+    private String color(String input) {
+        return AxOrdersAddon.color(input);
+    }
+
+    private List<String> colorLines(List<String> lines) {
+        List<String> colored = new ArrayList<>();
+        for (String line : lines) colored.add(color(line));
+        return colored;
+    }
 }
