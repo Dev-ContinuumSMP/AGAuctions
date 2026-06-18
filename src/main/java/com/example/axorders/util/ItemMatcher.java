@@ -26,6 +26,12 @@ public class ItemMatcher {
     );
     private static final Set<String> DEFAULT_IDENTITY_NAMESPACES = Set.of("mcmmo");
     
+    /**
+     * Checks if two ItemStacks match exactly, using custom IDs when the required item has one
+     * @param submitted The item submitted by the player
+     * @param required The item template from the buy order
+     * @return true if items match, false otherwise
+     */
     public static boolean matchesCustomItem(ItemStack submitted, ItemStack required) {
         logItemComparison(submitted, required);
 
@@ -45,9 +51,13 @@ public class ItemMatcher {
             return submitted.getType() == required.getType();
         }
 
+        // Only vanilla/player-customized items without PDC identifiers may fall back to normal similarity.
         return submitted.isSimilar(required);
     }
     
+    /**
+     * Gets the custom item ID from PersistentDataContainer
+     */
     public static String getCustomItemId(ItemStack item) {
         if (item == null || item.getItemMeta() == null) return null;
         
@@ -105,7 +115,7 @@ public class ItemMatcher {
                 if (key != null) keys.add(key);
             }
         } catch (IllegalStateException ignored) {
-
+            // Bukkit may not have a plugin instance in unit-style tests.
         }
         return keys;
     }
@@ -122,7 +132,7 @@ public class ItemMatcher {
                 }
             }
         } catch (IllegalStateException ignored) {
-            
+            // Bukkit may not have a plugin instance in unit-style tests.
         }
         return namespaces;
     }
@@ -145,7 +155,7 @@ public class ItemMatcher {
             logItem(logger, "REQUIRED ITEM", required);
             logItem(logger, "SUBMITTED ITEM", submitted);
         } catch (IllegalStateException ignored) {
-
+            // Bukkit may not have a plugin instance in unit-style tests.
         }
     }
 
@@ -159,6 +169,9 @@ public class ItemMatcher {
         logger.info("PDC keys: " + getPersistentDataKeys(item));
     }
     
+    /**
+     * Compares two lists for equality (handles nulls)
+     */
     private static boolean listsEqual(java.util.List<String> list1, java.util.List<String> list2) {
         if (list1 == null && list2 == null) return true;
         if (list1 == null || list2 == null) return false;
@@ -170,6 +183,9 @@ public class ItemMatcher {
         return true;
     }
     
+    /**
+     * Compares enchantments between two ItemMeta objects
+     */
     private static boolean enchantmentsEqual(ItemMeta meta1, ItemMeta meta2) {
         // If both have no enchantments, they match
         if (!meta1.hasEnchants() && !meta2.hasEnchants()) return true;
@@ -191,10 +207,16 @@ public class ItemMatcher {
         return true;
     }
     
+    /**
+     * Creates a custom item ID for use with PersistentDataContainer
+     */
     public static String createCustomItemId() {
         return "custom_item_" + UUID.randomUUID().toString().replace("-", "");
     }
     
+    /**
+     * Assigns a custom ID to an item for use with buy orders
+     */
     public static void assignCustomId(ItemStack item, String customId) {
         if (item == null || item.getItemMeta() == null) return;
         
