@@ -1,17 +1,20 @@
 name: AxOrdersAddon
-version: 1.0.0
+version: 1.0.2
 main: com.example.axorders.AxOrdersAddon
 api-version: '1.21'
 folia-supported: true
 description: Standalone buy orders addon for AxAuctions
 authors: [ Johnny ]
 depend: [ AxAuctions ]
+libraries:
+  - com.h2database:h2:2.3.232
 
 commands:
   orders:
     description: Open the AxAuctions buy orders GUI
-    usage: /orders [material]
+    usage: /orders [material|reload]
     aliases: [ order ]
+
   buyorder:
     description: Create a buy order
     usage: /buyorder <material> <amount> <priceEach> | /buyorder hand <amount> <priceEach>
@@ -21,9 +24,12 @@ permissions:
   axorders.use:
     description: Allows players to view and fill buy orders
     default: true
+
   axorders.create:
     description: Allows players to create buy orders
     default: true
+
   axorders.admin:
     description: Allows admins to cancel any order
     default: op
+
