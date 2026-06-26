@@ -96,55 +96,42 @@ mvnw.cmd clean package
 
 ### Auction House
 
-<p align="center"><strong>Overview</strong> | <strong>Statistics</strong></p>
 <p align="center">
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-overview.png" alt="Auction House Overview" width="48%" />
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-statistics.png" alt="Auction House Statistics" width="48%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-overview.png" alt="Auction House Overview" title="Auction House Overview" width="31%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-statistics.png" alt="Auction House Statistics" title="Auction House Statistics" width="31%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-filter.png" alt="Auction House Filter" title="Auction House Filter" width="31%" />
 </p>
-<p align="center"><strong>Filter</strong> | <strong>Search</strong></p>
 <p align="center">
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-filter.png" alt="Auction House Filter" width="48%" />
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-search.png" alt="Auction House Search" width="48%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-search.png" alt="Auction House Search" title="Auction House Search" width="31%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-claims.png" alt="Auction House Claims" title="Auction House Claims" width="31%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-close.png" alt="Auction House Close" title="Auction House Close" width="31%" />
 </p>
-<p align="center"><strong>Claims</strong> | <strong>Close</strong></p>
 <p align="center">
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-claims.png" alt="Auction House Claims" width="48%" />
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-close.png" alt="Auction House Close" width="48%" />
-</p>
-<p align="center"><strong>Page Switch</strong></p>
-<p align="center">
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-page-switch.png" alt="Auction House Page Switch" width="62%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-page-switch.png" alt="Auction House Page Switch" title="Auction House Page Switch" width="31%" />
 </p>
 
 ### Orders
 
-<p align="center"><strong>Overview</strong> | <strong>Collection Shortcut</strong></p>
 <p align="center">
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-overview.png" alt="Orders Overview" width="48%" />
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-filter.png" alt="Orders Collection Shortcut" width="48%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-overview.png" alt="Orders Overview" title="Orders Overview" width="31%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-filter.png" alt="Orders Collection Shortcut" title="Orders Collection Shortcut" width="31%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-search.png" alt="Orders Search" title="Orders Search" width="31%" />
 </p>
-<p align="center"><strong>Search</strong> | <strong>Refresh</strong></p>
 <p align="center">
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-search.png" alt="Orders Search" width="48%" />
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-refresh.png" alt="Orders Refresh" width="48%" />
-</p>
-<p align="center"><strong>Close</strong> | <strong>Page Switch</strong></p>
-<p align="center">
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-close.png" alt="Orders Close" width="48%" />
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-page-switch.png" alt="Orders Page Switch" width="48%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-refresh.png" alt="Orders Refresh" title="Orders Refresh" width="31%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-close.png" alt="Orders Close" title="Orders Close" width="31%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-page-switch.png" alt="Orders Page Switch" title="Orders Page Switch" width="31%" />
 </p>
 
 ### Collection
 
-<p align="center"><strong>Overview</strong> | <strong>Claim All</strong></p>
 <p align="center">
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/collection-overview.png" alt="Collection Overview" width="48%" />
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/collection-claim-all.png" alt="Collection Claim All" width="48%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/collection-overview.png" alt="Collection Overview" title="Collection Overview" width="31%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/collection-claim-all.png" alt="Collection Claim All" title="Collection Claim All" width="31%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/collection-waiting.png" alt="Collection Waiting Count" title="Collection Waiting Count" width="31%" />
 </p>
-<p align="center"><strong>Waiting Count</strong> | <strong>Back To Orders</strong></p>
 <p align="center">
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/collection-waiting.png" alt="Collection Waiting Count" width="48%" />
-	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/collection-back-to-orders.png" alt="Collection Back To Orders" width="48%" />
+	<img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/collection-back-to-orders.png" alt="Collection Back To Orders" title="Collection Back To Orders" width="31%" />
 </p>
 
 ## Configuration
