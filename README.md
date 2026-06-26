@@ -1,40 +1,116 @@
-<img width="2560" height="1369" alt="Minecraft_ 1 21 11 - Multiplayer (3rd-party Server) 18_06_2026 2_52_15 pm" src="https://github.com/user-attachments/assets/0b12f645-b247-428b-b14f-4015ab67658e" />
-<img width="2560" height="1369" alt="Minecraft_ 1 21 11 - Multiplayer (3rd-party Server) 15_06_2026 9_12_53 pm" src="https://github.com/user-attachments/assets/cbd8f581-78d7-4ba8-819e-43850317db91" />
-<img width="2560" height="1369" alt="Minecraft_ 1 21 11 - Multiplayer (3rd-party Server) 15_06_2026 7_05_15 pm" src="https://github.com/user-attachments/assets/28000171-184b-446b-b9ef-c5b5774f0472" />
-AGAuctions
-AGAuctions is a complete player marketplace plugin for Paper and Folia servers.
-It combines a modern auction house with buy orders, so players can both list what they have and post demand for what they need.
+# AGAuctions
 
-The plugin is built for real server use: fast GUI workflows, configurable messages and layouts, secure custom item handling, and reliable H2-backed persistence.
+A polished auction house and buy-order marketplace plugin for Paper and Folia servers.
 
-Features
-Full auction house experience under the ah command
-Buy-now listings and timed auction listings with bidding support
-Buy orders for materials and items in hand
-Offline-safe collection flow for pending deliveries
-Secure custom item matching using PersistentDataContainer identity keys
-Optional strict identity plus meta matching for stronger anti-spoof protection
-Blacklisted item rules for both listings and buy-order creation
-H2 database persistence for listings and orders
-Vault support for economy integration
-Extensive YAML configuration for GUIs, locale, feature matrix, webhooks, and item grouping
-Commands
-/ah
-/ah sell <price> [amount]
-/ah auction <startPrice> [duration] [amount]
-/ah buy <id>
-/ah bid <id> <amount>
-/ah claim
-/ah orders [material|claim]
-/ah buyorder <material> <amount> <priceEach>
-/orders [material|collect|claim|reload] (legacy access)
-/buyorder <material> <amount> <priceEach> (legacy alias)
-Permissions
-buyorders.use
-buyorders.ah.use
-buyorders.ah.sell
-buyorders.create
-buyorders.admin
-Why servers use AGAuctions
-AGAuctions makes player trading feel alive.
-Sellers can move stock quickly, buyers can post demand without waiting online, and staff keep full control through configurable rules and admin tools.
+AGAuctions gives your economy a true two-way market:
+- Sellers can list items for instant purchase or timed bidding.
+- Buyers can post demand through buy orders and get filled by other players.
+
+Built for live servers with secure custom-item handling, configurable GUIs, and reliable H2-backed storage.
+
+## Why AGAuctions
+
+- AH-first command flow centered around `/ah`
+- Buy-now listings and timed auctions with bidding
+- Buy orders for materials and in-hand items
+- Offline-safe item collection and claim flows
+- PDC-aware custom item identity matching
+- Optional strict identity + meta validation to reduce spoofing
+- Blacklist enforcement for listings and buy-order creation
+- Vault economy support when available
+- Folia-compatible runtime support
+- Modular YAML configuration system
+
+## Requirements
+
+- Java 21
+- Paper 1.21+ (Folia supported)
+
+## Installation
+
+1. Build the jar using Maven Wrapper.
+2. Place the built jar in your server `plugins` directory.
+3. Start the server once to generate plugin data and config files.
+4. Edit configuration files to match your economy and GUI preferences.
+5. Restart or reload the plugin.
+
+Build commands:
+
+```bash
+# Windows
+mvnw.cmd clean package
+
+# Linux/macOS
+./mvnw clean package
+```
+
+## Commands
+
+### Auction House
+
+| Command | Description |
+|---|---|
+| `/ah` | Open the auction house |
+| `/ah sell <price> [amount]` | Create a buy-now listing |
+| `/ah auction <startPrice> [duration] [amount]` | Create a timed auction listing |
+| `/ah buy <id>` | Buy a direct listing |
+| `/ah bid <id> <amount>` | Place a bid on an auction listing |
+| `/ah claim` | Claim auction outcomes and settlements |
+
+### Buy Orders
+
+| Command | Description |
+|---|---|
+| `/ah orders [material|claim]` | Open buy orders from AH flow |
+| `/ah buyorder <material> <amount> <priceEach>` | Create a buy order from AH flow |
+| `/buyorder <material> <amount> <priceEach>` | Legacy create command |
+| `/buyorder hand <amount> <priceEach>` | Create a buy order for the held item |
+| `/orders [material|collect|claim|reload]` | Legacy orders path |
+
+## Permissions
+
+| Permission | Description | Default |
+|---|---|---|
+| `buyorders.use` | View and fill buy orders | `true` |
+| `buyorders.ah.use` | Use auction house features | `true` |
+| `buyorders.ah.sell` | Create auction listings | `true` |
+| `buyorders.create` | Create buy orders | `true` |
+| `buyorders.admin` | Admin controls (cancel/reload) | `op` |
+
+## Configuration Files
+
+AGAuctions is designed to be configured by server owners through modular YAML files:
+
+- `config.yml`: Core behavior, economy provider, item matching, AH limits
+- `guis.yml`: GUI slots, icons, lore, labels, and layout behavior
+- `locale.yml`: Player-facing messages and language text
+- `gui-feature-matrix.yml`: Per-profile GUI feature toggles
+- `blacklisted-items.yml`: Material/name restrictions for safety rules
+- `item-groups.yml`: Category-style grouping support
+- `webhook-dispatch.yml`: Webhook templates and dispatch settings
+
+## Data and Storage
+
+- Persistence uses H2 database storage.
+- Data files are stored under the plugin data folder.
+- Legacy migration paths for older flat-file data are preserved where applicable.
+
+## Release
+
+- Current release: `1.0`
+- Artifact: `AGAuctions-1.0.jar`
+
+## Contributing and Support
+
+Issues and pull requests are welcome.
+
+When reporting a bug, include:
+- Server software and version
+- Java version
+- Plugin version
+- Reproduction steps
+- Relevant logs
+
+## License
+
+See `LICENSE`.
