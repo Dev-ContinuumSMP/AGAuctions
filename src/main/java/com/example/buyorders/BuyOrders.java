@@ -10,6 +10,8 @@ import com.example.buyorders.manager.CurrencyManager;
 import com.example.buyorders.manager.OrderManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -70,11 +72,9 @@ public class BuyOrders extends JavaPlugin {
         }
 
         if (getCommand("ah") != null) {
-            var cmd = getCommand("ah");
-            cmd.setExecutor(auctionHouseCommand);
-            cmd.setTabCompleter(auctionHouseCommand);
+            bindCommand("ah", auctionHouseCommand, auctionHouseCommand);
         }
-        
+
         getLogger().info("AGAuctions enabled.");
     }
 
@@ -123,6 +123,13 @@ public class BuyOrders extends JavaPlugin {
 
     private void register(Listener listener) {
         getServer().getPluginManager().registerEvents(listener, this);
+    }
+
+    private void bindCommand(String name, CommandExecutor executor, TabCompleter completer) {
+        var cmd = getCommand(name);
+        if (cmd == null) return;
+        cmd.setExecutor(executor);
+        cmd.setTabCompleter(completer);
     }
 
     @Override
