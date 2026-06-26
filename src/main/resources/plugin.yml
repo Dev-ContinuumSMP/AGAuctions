@@ -17,7 +17,7 @@ commands:
 
   ah:
     description: Open the built-in auction house
-    usage: /ah | /ah sell <price> [amount] | /ah auction <startPrice> [duration] [amount] | /ah buy <id> | /ah bid <id> <amount> | /ah claim | /ah orders [material|claim] | /ah buyorder <material> <amount> <priceEach>
+    usage: /ah | /ah sell <price> [amount] | /ah auction <startPrice> [duration] [amount] | /ah buy <id> | /ah bid <id> <amount> | /ah claim | /ah order(s) [material|collect|claim] | /ah buyorder(s) <material> <amount> <priceEach> | /ah buyorder(s) hand <amount> <priceEach>
     aliases: [ auctionhouse, auction ]
 
   buyorder:
