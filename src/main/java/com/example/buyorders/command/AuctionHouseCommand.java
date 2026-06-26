@@ -42,7 +42,7 @@ public class AuctionHouseCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args.length > 0 && args[0].equalsIgnoreCase("sell")) {
+        if (args.length > 0 && matchesSubcommand(args[0], "sell")) {
             if (!player.hasPermission("buyorders.ah.sell")) {
                 player.sendMessage(plugin.msg("no-permission"));
                 return true;
@@ -76,7 +76,7 @@ public class AuctionHouseCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args.length > 0 && args[0].equalsIgnoreCase("auction")) {
+        if (args.length > 0 && matchesSubcommand(args[0], "auction")) {
             if (!player.hasPermission("buyorders.ah.sell")) {
                 player.sendMessage(plugin.msg("no-permission"));
                 return true;
@@ -113,7 +113,7 @@ public class AuctionHouseCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args.length > 0 && args[0].equalsIgnoreCase("bid")) {
+        if (args.length > 0 && matchesSubcommand(args[0], "bid")) {
             if (args.length < 3) {
                 player.sendMessage(BuyOrders.color("&eUsage: /ah bid <listingId> <amount>"));
                 return true;
@@ -146,7 +146,7 @@ public class AuctionHouseCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args.length > 0 && args[0].equalsIgnoreCase("buy")) {
+        if (args.length > 0 && matchesSubcommand(args[0], "buy")) {
             if (args.length < 2) {
                 player.sendMessage(BuyOrders.color("&eUsage: /ah buy <listingId>"));
                 return true;
@@ -170,17 +170,19 @@ public class AuctionHouseCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args.length > 0 && args[0].equalsIgnoreCase("buyorder")) {
+        if (args.length > 0 && matchesSubcommand(args[0], "buyorder", "buyorders")) {
             String[] forwarded = Arrays.copyOfRange(args, 1, args.length);
             if (forwarded.length == 0) {
                 player.sendMessage(BuyOrders.color("&eUsage: /ah buyorder <material> <amount> <priceEach>"));
+                player.sendMessage(BuyOrders.color("&eUsage: /ah buyorders <material> <amount> <priceEach>"));
                 player.sendMessage(BuyOrders.color("&eUsage: /ah buyorder hand <amount> <priceEach>"));
+                player.sendMessage(BuyOrders.color("&eUsage: /ah buyorders hand <amount> <priceEach>"));
                 return true;
             }
             return buyOrderDelegate.onCommand(sender, command, label, forwarded);
         }
 
-        if (args.length > 0 && args[0].equalsIgnoreCase("orders")) {
+        if (args.length > 0 && matchesSubcommand(args[0], "orders", "order")) {
             if (args.length >= 2 && (args[1].equalsIgnoreCase("collect")
                     || args[1].equalsIgnoreCase("collection")
                     || args[1].equalsIgnoreCase("claim"))) {
@@ -201,7 +203,7 @@ public class AuctionHouseCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args.length > 0 && args[0].equalsIgnoreCase("claim")) {
+        if (args.length > 0 && matchesSubcommand(args[0], "claim")) {
             AuctionHouseManager manager = plugin.getAuctionHouseManager();
             int claimed = manager.claimAll(player);
             if (claimed <= 0) {
@@ -225,8 +227,10 @@ public class AuctionHouseCommand implements CommandExecutor, TabCompleter {
             if ("auction".startsWith(typed)) suggestions.add("auction");
             if ("buy".startsWith(typed)) suggestions.add("buy");
             if ("buyorder".startsWith(typed)) suggestions.add("buyorder");
+            if ("buyorders".startsWith(typed)) suggestions.add("buyorders");
             if ("bid".startsWith(typed)) suggestions.add("bid");
             if ("claim".startsWith(typed)) suggestions.add("claim");
+            if ("order".startsWith(typed)) suggestions.add("order");
             if ("orders".startsWith(typed)) suggestions.add("orders");
             return suggestions;
         }
@@ -259,13 +263,13 @@ public class AuctionHouseCommand implements CommandExecutor, TabCompleter {
             return List.of("<listingId>");
         }
 
-        if (args.length >= 2 && args[0].equalsIgnoreCase("buyorder")) {
+        if (args.length >= 2 && matchesSubcommand(args[0], "buyorder", "buyorders")) {
             String[] forwarded = Arrays.copyOfRange(args, 1, args.length);
             List<String> delegated = buyOrderDelegate.onTabComplete(sender, command, alias, forwarded);
             return delegated == null ? Collections.emptyList() : delegated;
         }
 
-        if (args.length == 2 && args[0].equalsIgnoreCase("orders")) {
+        if (args.length == 2 && matchesSubcommand(args[0], "orders", "order")) {
             List<String> suggestions = new ArrayList<>();
             String typed = args[1].toLowerCase();
 
@@ -287,5 +291,20 @@ public class AuctionHouseCommand implements CommandExecutor, TabCompleter {
         }
 
         return Collections.emptyList();
+    }
+
+    private boolean matchesSubcommand(String input, String... aliases) {
+        if (input == null || input.isBlank()) return false;
+
+        String[] tokens = input.toLowerCase().split("/");
+        for (String token : tokens) {
+            for (String alias : aliases) {
+                if (token.equals(alias.toLowerCase())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
