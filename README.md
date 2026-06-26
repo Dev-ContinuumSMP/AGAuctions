@@ -96,6 +96,12 @@ mvnw.cmd clean package
 
 ### Auction House
 
+<p align="center">
+	<img alt="Auction House" src="https://img.shields.io/badge/Auction%20House-Core%20Market-2563eb" />
+	<img alt="Buy Now" src="https://img.shields.io/badge/Buy--Now-Enabled-0ea5e9" />
+	<img alt="Bidding" src="https://img.shields.io/badge/Bidding-Live-1d4ed8" />
+</p>
+
 | Preview | Preview | Preview |
 |---|---|---|
 | <img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-overview.png" alt="Auction House Overview" width="300" /> | <img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-statistics.png" alt="Auction House Statistics" width="300" /> | <img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/ah-filter.png" alt="Auction House Filter" width="300" /> |
@@ -104,12 +110,24 @@ mvnw.cmd clean package
 
 ### Orders
 
+<p align="center">
+	<img alt="Buy Orders" src="https://img.shields.io/badge/Buy%20Orders-Demand%20Flow-16a34a" />
+	<img alt="Sorting" src="https://img.shields.io/badge/Sorting-Quick-22c55e" />
+	<img alt="Search" src="https://img.shields.io/badge/Search-Instant-15803d" />
+</p>
+
 | Preview | Preview | Preview |
 |---|---|---|
 | <img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-overview.png" alt="Orders Overview" width="300" /> | <img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-filter.png" alt="Orders Collection Shortcut" width="300" /> | <img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-search.png" alt="Orders Search" width="300" /> |
 | <img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-refresh.png" alt="Orders Refresh" width="300" /> | <img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-close.png" alt="Orders Close" width="300" /> | <img src="https://raw.githubusercontent.com/Dev-ContinuumSMP/AGAuctions/main/docs/images/orders-page-switch.png" alt="Orders Page Switch" width="300" /> |
 
 ### Collection
+
+<p align="center">
+	<img alt="Collection" src="https://img.shields.io/badge/Collection-Claim%20Queue-a855f7" />
+	<img alt="Claim All" src="https://img.shields.io/badge/Claim%20All-Available-c084fc" />
+	<img alt="Offline Safe" src="https://img.shields.io/badge/Offline-Safe-9333ea" />
+</p>
 
 | Preview | Preview | Preview |
 |---|---|---|
