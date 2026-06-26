@@ -32,7 +32,7 @@ public class BuyOrderCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(plugin.msg("player-only"));
             return true;
         }
-        if (!player.hasPermission("axorders.create")) {
+        if (!player.hasPermission("buyorders.create")) {
             player.sendMessage(plugin.msg("no-permission"));
             return true;
         }
@@ -77,6 +77,11 @@ public class BuyOrderCommand implements CommandExecutor, TabCompleter {
             }
 
             template = new ItemStack(material);
+        }
+
+        if (plugin.isItemBlacklisted(template)) {
+            player.sendMessage(plugin.msg("item-blacklisted"));
+            return true;
         }
 
         int amount;        

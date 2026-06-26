@@ -1,0 +1,65 @@
+# GUI capability matrix for AGAuctions.
+# Use this file to define which controls are active in each interface profile.
+# /orders reload will re-read this file.
+
+active-profile: "default"
+
+profiles:
+  default:
+    gui:
+      orders:
+        collection: true
+        sort: true
+        search: true
+        refresh: true
+        close: true
+        paging: true
+      auction:
+        sort: true
+        search: true
+        stats: true
+        claim: true
+        close: true
+        paging: true
+      collection:
+        sort: true
+        search: true
+        back: true
+        info: true
+        claim_all: true
+        paging: true
+
+  streamlined:
+    gui:
+      orders:
+        collection: true
+        sort: false
+        search: false
+        refresh: true
+        close: true
+        paging: true
+      auction:
+        sort: false
+        search: true
+        stats: false
+        claim: true
+        close: true
+        paging: true
+      collection:
+        sort: false
+        search: false
+        back: true
+        info: true
+        claim_all: true
+        paging: true
+
+# Optional category-to-profile mappings for future category UI logic.
+item-group-profiles:
+  all-items: default
+  battle-kit: default
+  crafter-tools: streamlined
+  alchemy-goods: default
+  builder-bin: streamlined
+  rare-find: default
+
+version: 1

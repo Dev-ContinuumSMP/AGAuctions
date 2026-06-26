@@ -8,7 +8,6 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.lang.reflect.Method;
 import java.text.DecimalFormat;
-import java.util.Map;
 import java.util.UUID;
 
 public class CurrencyManager {
@@ -17,42 +16,23 @@ public class CurrencyManager {
 
     private final BuyOrders plugin;
     private Provider provider;
-    private Object axAuctionsHook;
     private boolean loggedProvider;
-    private boolean warnedAxAuctionsEmptyRegistry;
 
     public CurrencyManager(BuyOrders plugin) {
         this.plugin = plugin;
     }
 
     public void init() {
-        reload(false);
-        scheduleRetry(20L);
-        scheduleRetry(100L);
-        scheduleRetry(200L);
-    }
-
-    public Object getHook() {
-        if (provider == null) reload(true);
-        return axAuctionsHook;
+        reload();
     }
 
     public boolean isAvailable() {
-        if (provider == null) reload(true);
+        if (provider == null) reload();
         return provider != null;
     }
 
     public void reload() {
-        reload(true);
-    }
-
-    private void reload(boolean warn) {
         Provider selected = findVaultProvider();
-        axAuctionsHook = null;
-
-        if (selected == null && plugin.getConfig().getBoolean("currency.axauctions.enabled", false)) {
-            selected = findAxAuctionsProvider(warn);
-        }
 
         if (selected == null) {
             selected = new ExperienceProvider();
@@ -79,88 +59,9 @@ public class CurrencyManager {
         }
     }
 
-    private Provider findAxAuctionsProvider(boolean warn) {
-        Map<?, ?> registry;
-        try {
-            Class<?> apiClass = Class.forName("com.artillexstudios.axauctions.api.AxAuctionsAPI");
-            registry = (Map<?, ?>) apiClass.getMethod("getRegistry").invoke(null);
-        } catch (ReflectiveOperationException | LinkageError | ClassCastException ex) {
-            if (warn) {
-                plugin.getLogger().warning("AxAuctions currency fallback is enabled, but AxAuctions is not available.");
-            }
-            return null;
-        }
-
-        String configured = plugin.getConfig().getString("currency.axauctions.currency", "Vault").trim();
-
-        if (registry == null || registry.isEmpty()) {
-            if (warn && !warnedAxAuctionsEmptyRegistry) {
-                plugin.getLogger().warning("AxAuctions currency fallback is enabled, but AxAuctions has not registered any currency hooks yet.");
-                warnedAxAuctionsEmptyRegistry = true;
-            }
-            return null;
-        }
-
-        Object found = registry.get(configured);
-        if (found == null) {
-            for (Map.Entry<?, ?> entry : registry.entrySet()) {
-                String hookName = getAxAuctionsHookName(entry.getValue());
-                if (String.valueOf(entry.getKey()).equalsIgnoreCase(configured) || hookName.equalsIgnoreCase(configured)) {
-                    found = entry.getValue();
-                    break;
-                }
-            }
-        }
-
-        if (found == null) {
-            if (warn) {
-                plugin.getLogger().warning("AxAuctions currency '" + configured + "' is not available. Falling back to experience. Available currencies: "
-                        + registryKeys(registry));
-            }
-            return null;
-        }
-
-        warnedAxAuctionsEmptyRegistry = false;
-        axAuctionsHook = found;
-        try {
-            return new AxAuctionsProvider(found);
-        } catch (IllegalStateException ex) {
-            if (warn) {
-                plugin.getLogger().warning("AxAuctions currency hook is not compatible. Falling back to experience.");
-            }
-            axAuctionsHook = null;
-            return null;
-        }
-    }
-
-    private String getAxAuctionsHookName(Object hook) {
-        if (hook == null) return "";
-        try {
-            return String.valueOf(hook.getClass().getMethod("getName").invoke(hook));
-        } catch (ReflectiveOperationException ex) {
-            return "";
-        }
-    }
-
-    private String registryKeys(Map<?, ?> registry) {
-        StringBuilder keys = new StringBuilder();
-        for (Object key : registry.keySet()) {
-            if (!keys.isEmpty()) keys.append(", ");
-            keys.append(key);
-        }
-        return keys.toString();
-    }
-
-    private void scheduleRetry(long delayTicks) {
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (!plugin.isEnabled() || provider instanceof VaultProvider) return;
-            reload(delayTicks >= 200L);
-        }, delayTicks);
-    }
-
     public boolean has(UUID player, double amount) {
         try {
-            return isAvailable() && provider.has(player, amount);
+            return isAvailable() && provider != null && provider.has(player, amount);
         } catch (Exception e) {
             plugin.getLogger().warning("Currency check failed: " + e.getMessage());
             return false;
@@ -169,7 +70,7 @@ public class CurrencyManager {
 
     public boolean take(UUID player, double amount) {
         try {
-            return isAvailable() && provider.take(player, amount);
+            return isAvailable() && provider != null && provider.take(player, amount);
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to take currency balance: " + e.getMessage());
             return false;
@@ -178,7 +79,7 @@ public class CurrencyManager {
 
     public boolean give(UUID player, double amount) {
         try {
-            return isAvailable() && provider.give(player, amount);
+            return isAvailable() && provider != null && provider.give(player, amount);
         } catch (Exception exception) {
             plugin.getLogger().warning("Failed to give currency balance: " + exception.getMessage());
             return false;
@@ -187,7 +88,15 @@ public class CurrencyManager {
 
     public String format(double amount) {
         String currency = provider == null ? "experience" : provider.name();
-        return FORMAT.format(amount) + " " + currency;
+        String template = plugin.getConfig().getString("currency.display-format", "{amount} {currency}");
+        return template
+                .replace("{amount}", FORMAT.format(amount))
+                .replace("{currency}", currency)
+                .replace("{currency_name}", currency);
+    }
+
+    public String formatPlain(double amount) {
+        return FORMAT.format(amount);
     }
 
     private interface Provider {
@@ -198,52 +107,6 @@ public class CurrencyManager {
         boolean take(UUID player, double amount) throws Exception;
 
         boolean give(UUID player, double amount) throws Exception;
-    }
-
-    private class AxAuctionsProvider implements Provider {
-        private final Object hook;
-        private final Method getName;
-        private final Method getBalance;
-        private final Method takeBalance;
-        private final Method giveBalance;
-
-        private AxAuctionsProvider(Object hook) {
-            this.hook = hook;
-            try {
-                this.getName = hook.getClass().getMethod("getName");
-                this.getBalance = hook.getClass().getMethod("getBalance", UUID.class);
-                this.takeBalance = hook.getClass().getMethod("takeBalance", UUID.class, double.class);
-                this.giveBalance = hook.getClass().getMethod("giveBalance", UUID.class, double.class);
-            } catch (NoSuchMethodException ex) {
-                throw new IllegalStateException("Invalid AxAuctions currency hook", ex);
-            }
-        }
-
-        @Override
-        public String name() {
-            try {
-                return String.valueOf(getName.invoke(hook));
-            } catch (Exception ex) {
-                return "AxAuctions";
-            }
-        }
-
-        @Override
-        public boolean has(UUID player, double amount) throws Exception {
-            return ((Number) getBalance.invoke(hook, player)).doubleValue() >= amount;
-        }
-
-        @Override
-        public boolean take(UUID player, double amount) throws Exception {
-            Object future = takeBalance.invoke(hook, player, amount);
-            return (Boolean) future.getClass().getMethod("join").invoke(future);
-        }
-
-        @Override
-        public boolean give(UUID player, double amount) throws Exception {
-            Object future = giveBalance.invoke(hook, player, amount);
-            return (Boolean) future.getClass().getMethod("join").invoke(future);
-        }
     }
 
     private class VaultProvider implements Provider {

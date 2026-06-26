@@ -51,8 +51,9 @@ public class OrderManager {
 
     public OrderManager(BuyOrders plugin) {
         this.plugin = plugin;
+        File dataFolder = new File(plugin.getDataFolder(), "data");
         this.legacyDataFile = new File(plugin.getDataFolder(), "orders.yml");
-        this.databaseFile = new File(plugin.getDataFolder(), "orders");
+        this.databaseFile = new File(dataFolder, "orders");
     }
 
     public synchronized void load() {
@@ -382,7 +383,7 @@ public class OrderManager {
             if (order == null) return plugin.msg("order-not-found");
 
             if (!order.getBuyerUuid().equals(player.getUniqueId())
-                    && !player.hasPermission("axorders.admin")) {
+                    && !player.hasPermission("buyorders.admin")) {
                 return plugin.msg("no-permission");
             }
 
@@ -684,6 +685,24 @@ public class OrderManager {
 
     public synchronized List<ItemStack> getPendingDeliveries(UUID uuid) {
         return getPending(uuid);
+    }
+
+    public synchronized int getPendingDeliveryCount(UUID uuid) {
+        return pendingDeliveries.getOrDefault(uuid, Collections.emptyList()).size();
+    }
+
+    public synchronized boolean removePendingDelivery(UUID uuid, int index) {
+        List<ItemStack> items = pendingDeliveries.get(uuid);
+        if (items == null || index < 0 || index >= items.size()) return false;
+
+        ItemStack removed = items.remove(index);
+        if (items.isEmpty()) pendingDeliveries.remove(uuid);
+
+        if (save()) return true;
+
+        pendingDeliveries.computeIfAbsent(uuid, ignored -> new ArrayList<>()).add(Math.min(index, getPendingDeliveryCount(uuid)), removed);
+        save();
+        return false;
     }
 
     public synchronized void clearPending(UUID uuid) {

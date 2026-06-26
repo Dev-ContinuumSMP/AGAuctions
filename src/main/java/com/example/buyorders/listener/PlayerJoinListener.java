@@ -6,10 +6,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.inventory.ItemStack;
-
-import java.util.List;
-import java.util.Map;
 
 public class PlayerJoinListener implements Listener {
 
@@ -24,34 +20,10 @@ public class PlayerJoinListener implements Listener {
         Player player = event.getPlayer();
     
         Bukkit.getScheduler().runTask(plugin, () -> {
-    
-            List<ItemStack> pending = plugin.getOrderManager()
-                    .getPendingDeliveries(player.getUniqueId());
-    
-            if (pending == null || pending.isEmpty()) return;
-    
-            boolean overflowed = false;
-    
-            for (ItemStack item : pending) {
-                if (item == null || item.getType().isAir()) continue;
-    
-                Map<Integer, ItemStack> overflow = player.getInventory().addItem(item);
-    
-                if (!overflow.isEmpty()) {
-                    overflowed = true;
-                    for (ItemStack overflowItem : overflow.values()) {
-                        player.getWorld().dropItemNaturally(player.getLocation(), overflowItem);
-                    }
-                }
-            }
-    
-            plugin.getOrderManager().clearPendingDeliveries(player.getUniqueId());
-    
-            if (overflowed) {
-                player.sendMessage(BuyOrders.color("&eSome buy-order items were dropped because your inventory was full."));
-            } else {
-                player.sendMessage(BuyOrders.color("&aYour pending buy-order items were delivered."));
-            }
+            int pending = plugin.getOrderManager().getPendingDeliveryCount(player.getUniqueId());
+            if (pending <= 0) return;
+
+            player.sendMessage(BuyOrders.color(plugin.msg("collection-pending", "{amount}", String.valueOf(pending))));
         });
     }
 }

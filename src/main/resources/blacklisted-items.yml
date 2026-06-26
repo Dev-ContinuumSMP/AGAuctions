@@ -1,0 +1,19 @@
+# Item filtering rules used by AGAuctions.
+# Wildcards are supported using * (example: COMMAND_BLOCK* or *_SPAWN_EGG).
+
+enabled: true
+
+# Match by Bukkit material names.
+materials:
+  - BEDROCK
+  - BARRIER
+  - COMMAND_BLOCK*
+  - STRUCTURE_BLOCK
+  - JIGSAW
+
+# Optional display-name matching.
+# Only used when match-display-name is true.
+match-display-name: false
+names: []
+
+version: 1

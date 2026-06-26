@@ -1,0 +1,312 @@
+gui:
+  title: "{store_name} (&f{page}&7/&f{total_pages}&0)"
+  filtered-title: "{store_name} &8- &b{filter} (&f{page}&7/&f{total_pages}&0)"
+  rows: 6
+  order-slots:
+    - 9-44
+  filler:
+    enabled: true
+    slots:
+      - 0-3
+      - 5-8
+      - 47-48
+      - 50-51
+    material: "BLACK_STAINED_GLASS_PANE"
+    amount: 1
+    name: " "
+    lore: []
+  sort-labels:
+    highest_price: "Highest Price"
+    lowest_price: "Lowest Price"
+    recently_listed: "Recently Listed"
+  search-empty: "None"
+  controls:
+    collection:
+      slot: 4
+      material: "ENDER_CHEST"
+      amount: 1
+      name: "&bCollection"
+      lore:
+        - "&7{pending_count} item stack(s) waiting"
+        - "&7Click to open"
+    sort:
+      slot: 45
+      material: "ANVIL"
+      amount: 1
+      name: "&bFilter: &f{sort}"
+      lore:
+        - "&7Click to change"
+        - "{highest_price}"
+        - "{lowest_price}"
+        - "{recently_listed}"
+    search:
+      slot: 46
+      material: "SPYGLASS"
+      amount: 1
+      name: "&bSearch: &f{search}"
+      lore:
+        - "&7Left-click to search"
+        - "&7Right-click to clear"
+    refresh:
+      slot: 49
+      material: "SUNFLOWER"
+      amount: 1
+      name: "&bRefresh"
+      lore: []
+    close:
+      slot: 52
+      material: "BARRIER"
+      amount: 1
+      name: "&bClose"
+      lore:
+        - "&7Click to close"
+    next:
+      slot: 53
+      material: "ARROW"
+      amount: 1
+      name: "&bChange Page"
+      lore:
+        - "&7Left-click >> Next Page"
+        - "&7Right-click >> Previous Page"
+  order-item:
+    preserve-template-name: true
+    inherit-template-tooltip: false
+    name: "&f{material}"
+    template-tooltip:
+      enabled: true
+      separator: false
+      lines:
+        - " "
+        - "&8&m--------------------------"
+        - " &bItem: &f{template_name}"
+        - "{template_lore_lines}"
+        - "{template_enchants_lines}"
+        - "{template_nbt_lines}"
+        - "&8&m--------------------------"
+    lore:
+      - " &bBuyer: &f{buyer}"
+      - " &bPrice Each: &f{price_each}"
+      - " &bRemaining: &f{remaining}&7/&f{wanted}"
+      - "&8&m--------------------------"
+    actions:
+      own-order:
+        - "&bRight Click &7>> &cCancel Order"
+      can-fill:
+        - "&bLeft Click &7>> &fFill Order"
+      no-items:
+        - "&7You do not have this item"
+      admin:
+        - "&bRight Click &7>> &cCancel (Admin)"
+
+fill-gui:
+  title: "&6Fill {material}"
+  rows: 6
+  item-tooltip:
+    enabled: true
+    separator: true
+  deposit-slots:
+    - 0-44
+  filler:
+    enabled: true
+    slots:
+      - 45
+      - 46
+      - 47
+      - 51
+      - 52
+      - 53
+    material: "BLACK_STAINED_GLASS_PANE"
+    amount: 1
+    name: " "
+    lore: []
+  controls:
+    cancel:
+      slot: 48
+      material: "BARRIER"
+      amount: 1
+      name: "&bCancel"
+      lore:
+        - "&7Returns deposited items"
+    info:
+      slot: 49
+      material: "PAPER"
+      amount: 1
+      name: "&fDeposited: &7{deposited}&f/&7{remaining}"
+      lore:
+        - "&7Price Each: &f{price_each}"
+        - "&7Payout: &f{payout}"
+    confirm:
+      slot: 50
+      material: "EMERALD_BLOCK"
+      amount: 1
+      name: "&bConfirm Sale"
+      lore:
+        - "&7Sell deposited matching items"
+
+collection-gui:
+  title: "&0Collection (&f{page}&7/&f{total_pages}&0)"
+  search-empty: "None"
+  rows: 6
+  item-tooltip:
+    enabled: true
+    separator: true
+  item-slots:
+    - 0-44
+  item-lore:
+    - ""
+    - "&bClick to collect"
+  filler:
+    enabled: true
+    slots:
+      - 45-47
+      - 51-52
+      - 53
+    material: "BLACK_STAINED_GLASS_PANE"
+    amount: 1
+    name: " "
+    lore: []
+  controls:
+    back:
+      slot: 48
+      material: "BARRIER"
+      amount: 1
+      name: "&bBack to Orders"
+      lore: []
+    info:
+      slot: 49
+      material: "PAPER"
+      amount: 1
+      name: "&fCollection &7{page}&f/&7{total_pages}"
+      lore:
+        - "&7{pending_count} item stack(s) waiting"
+    claim-all:
+      slot: 50
+      material: "EMERALD_BLOCK"
+      amount: 1
+      name: "&bClaim All"
+      lore:
+        - "&7Claim everything that fits"
+    next:
+      slot: 53
+      material: "ARROW"
+      amount: 1
+      name: "&bChange Page"
+      lore:
+        - "&7Left-click >> Next Page"
+        - "&7Right-click >> Previous Page"
+
+ah-gui:
+  title: "&0Auction House (&f{page}&7/&f{total_pages}&0)"
+  search-empty: "None"
+  rows: 6
+  item-tooltip:
+    enabled: true
+    separator: true
+  listing-slots:
+    - 9-44
+  filler:
+    enabled: true
+    slots:
+      - 0-3
+      - 5-8
+      - 47-48
+      - 50-51
+    material: "BLACK_STAINED_GLASS_PANE"
+    amount: 1
+    name: " "
+    lore: []
+  sort-labels:
+    highest_price: "Highest Price"
+    lowest_price: "Lowest Price"
+    recently_listed: "Recently Listed"
+    bids_only: "Bids Only"
+  listing-item:
+    lore:
+      - " "
+      - "&8&m--------------------------"
+      - " &bType: &f{listing_type}"
+      - " &bSeller: &f{seller}"
+      - " &bPrice: &f{display_price}"
+      - " &bCurrent Bid: &f{current_bid}"
+      - " &bBids: &f{bid_count}"
+      - " &bHighest Bidder: &f{highest_bidder}"
+      - " &bTime Left: &f{time_left}"
+      - " &bID: &f#{id}"
+      - "&8&m--------------------------"
+      - "&bLeft Click &7>> &fBuy/Bid"
+      - "&bRight Click &7>> &fCancel Listing"
+  controls:
+    sort:
+      slot: 45
+      material: "ANVIL"
+      amount: 1
+      name: "&bFilter: &f{sort}"
+      lore:
+        - "&7Click to change"
+        - "{highest_price}"
+        - "{lowest_price}"
+        - "{recently_listed}"
+        - "{bids_only}"
+    search:
+      slot: 46
+      material: "SPYGLASS"
+      amount: 1
+      name: "&bSearch: &f{search}"
+      lore:
+        - "&7Left-click to search"
+        - "&7Right-click to clear"
+        - "&8type:bid | type:buy | id:abc123"
+    info:
+      slot: 4
+      material: "ENCHANTED_BOOK"
+      amount: 1
+      name: "&bStatistics"
+      lore:
+        - " "
+        - "&8&m--------------------------"
+        - " &bActive Listings: &f{total_listings}"
+        - " &bGlobal Value: &f{total_value}"
+        - " &bYour Listings: &f{your_active_listings}"
+        - " &bYour Listing Value: &f{your_active_value}"
+        - " &bSold: &f{items_sold} &7| &bBought: &f{items_bought}"
+        - " &bEarned: &f{earned}"
+        - " &bSpent: &f{spent}"
+        - " "
+        - " &fCommands"
+        - " &7/ah"
+        - " &7Use &f/ah sell <price> [amount]"
+        - " &7Use &f/ah auction <start> [duration] [amount]"
+        - " &7Use &f/ah buy <id>"
+        - " &7Use &f/ah bid <id> <amount>"
+        - " &7Use &f/ah claim"
+        - " &7Use &f/ah orders"
+        - " &7Use &f/ah orders claim"
+        - " &7Use &f/ah buyorder <material> <amount> <priceEach>"
+        - " "
+        - " &8Legacy aliases"
+        - " &7/orders"
+        - " &7/orders claim"
+        - " &7/buyorder"
+        - "&8&m--------------------------"
+    claim:
+      slot: 49
+      material: "CHEST"
+      amount: 1
+      name: "&bMy Claims: &f{claim_count}"
+      lore:
+        - "&7Click to claim pending items"
+    close:
+      slot: 52
+      material: "BARRIER"
+      amount: 1
+      name: "&bClose"
+      lore:
+        - "&7Click to close"
+    next:
+      slot: 53
+      material: "ARROW"
+      amount: 1
+      name: "&bChange Page"
+      lore:
+        - "&7Left-click >> Next Page"
+        - "&7Right-click >> Previous Page"

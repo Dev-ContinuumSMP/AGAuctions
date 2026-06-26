@@ -1,0 +1,42 @@
+# Optional item group definitions for future category filtering UI.
+# This file is loaded and kept for forward compatibility.
+
+enabled: false
+
+groups:
+  all-items:
+    display-name: "All Listings"
+    icon: "COMPASS"
+    match:
+      - material: "*"
+
+  battle-kit:
+    display-name: "Battle Kit"
+    icon: "NETHERITE_SWORD"
+    match:
+      - material: "*_SWORD"
+      - material: "*_AXE"
+      - material: "*_HELMET"
+      - material: "*_CHESTPLATE"
+      - material: "*_LEGGINGS"
+      - material: "*_BOOTS"
+
+  crafter-tools:
+    display-name: "Crafter Tools"
+    icon: "DIAMOND_PICKAXE"
+    match:
+      - material: "*_PICKAXE"
+      - material: "*_SHOVEL"
+      - material: "*_HOE"
+      - material: "*_AXE"
+
+  builder-bin:
+    display-name: "Builder Bin"
+    icon: "BRICKS"
+    match:
+      - material: "*_PLANKS"
+      - material: "*_LOG"
+      - material: "*_STONE"
+      - material: "GLASS"
+
+version: 1

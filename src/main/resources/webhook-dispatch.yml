@@ -1,0 +1,69 @@
+# Outbound webhook templates for AGAuctions.
+# Leave endpoint empty to disable delivery.
+
+endpoint: ""
+enabled: false
+
+# Shared options used when an event section does not override them.
+defaults:
+  username: "AGAuctions Relay"
+  avatar-url: ""
+  use-embeds: true
+  color: "#28A3A8"
+
+events:
+  listing-created:
+    enabled: true
+    title: "Marketplace Listing Opened"
+    description: "{seller} listed {amount}x {item}."
+    fields:
+      - name: "Price"
+        value: "{price}"
+        inline: true
+      - name: "Kind"
+        value: "{listing_type}"
+        inline: true
+
+  listing-purchased:
+    enabled: true
+    title: "Marketplace Purchase"
+    description: "{buyer} bought {amount}x {item} from {seller}."
+    fields:
+      - name: "Total"
+        value: "{price}"
+        inline: true
+
+  listing-bid:
+    enabled: true
+    title: "Auction Bid Placed"
+    description: "{bidder} bid on listing #{id}."
+    fields:
+      - name: "Bid"
+        value: "{bid_amount}"
+        inline: true
+      - name: "Time Left"
+        value: "{time_left}"
+        inline: true
+
+  order-posted:
+    enabled: true
+    title: "Buy Request Posted"
+    description: "{buyer} requested {amount}x {item}."
+    fields:
+      - name: "Price Each"
+        value: "{price_each}"
+        inline: true
+
+  order-fulfilled:
+    enabled: true
+    title: "Buy Request Fulfilled"
+    description: "{filler} fulfilled an order for {buyer}."
+    fields:
+      - name: "Amount"
+        value: "{amount}"
+        inline: true
+      - name: "Payout"
+        value: "{payment}"
+        inline: true
+
+version: 1

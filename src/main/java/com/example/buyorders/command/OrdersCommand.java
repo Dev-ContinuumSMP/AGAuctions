@@ -1,6 +1,7 @@
 package com.example.buyorders.command;
 
 import com.example.buyorders.BuyOrders;
+import com.example.buyorders.gui.CollectionGUI;
 import com.example.buyorders.gui.OrdersGUI;
 import com.example.buyorders.manager.OrderManager;
 import org.bukkit.Material;
@@ -26,12 +27,12 @@ public class OrdersCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
-            if (!sender.hasPermission("axorders.admin")) {
+            if (!sender.hasPermission("buyorders.admin")) {
                 sender.sendMessage(plugin.msg("no-permission"));
                 return true;
             }
 
-            plugin.reloadConfig();
+            plugin.reloadAllPluginConfigs();
             plugin.getCurrencyManager().reload();
             sender.sendMessage(plugin.msg("reloaded"));
             return true;
@@ -42,8 +43,15 @@ public class OrdersCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         
-        if (!player.hasPermission("axorders.use")) {
+        if (!player.hasPermission("buyorders.use")) {
             player.sendMessage(plugin.msg("no-permission"));
+            return true;
+        }
+
+        if (args.length > 0 && (args[0].equalsIgnoreCase("collect")
+            || args[0].equalsIgnoreCase("collection")
+            || args[0].equalsIgnoreCase("claim"))) {
+            new CollectionGUI(plugin, player).open();
             return true;
         }
 
@@ -78,7 +86,15 @@ public class OrdersCommand implements CommandExecutor, TabCompleter {
                 .limit(30)
                 .collect(Collectors.toList());
 
-        if (sender.hasPermission("axorders.admin") && "reload".startsWith(typed)) {
+        if ("collect".startsWith(typed)) {
+            completions.add(0, "collect");
+        }
+
+        if ("claim".startsWith(typed)) {
+            completions.add(0, "claim");
+        }
+
+        if (sender.hasPermission("buyorders.admin") && "reload".startsWith(typed)) {
             completions.add(0, "reload");
         }
 

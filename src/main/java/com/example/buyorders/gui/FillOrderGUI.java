@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public class FillOrderGUI implements InventoryHolder {
 
     private final BuyOrders plugin;
@@ -204,6 +205,22 @@ public class FillOrderGUI implements InventoryHolder {
         if (lore.isEmpty()) lore = defaultItemLore(path);
         meta.setLore(colorLines(applyPlaceholders(lore, placeholders)));
 
+        if ("fill-gui.controls.info".equals(path) && plugin.getConfig().getBoolean("fill-gui.item-tooltip.enabled", true)) {
+            List<String> nbtLines = buildNbtLines(template);
+            if (!nbtLines.isEmpty()) {
+                if (plugin.getConfig().getBoolean("fill-gui.item-tooltip.separator", true) && meta.getLore() != null && !meta.getLore().isEmpty()) {
+                    List<String> updatedLore = new ArrayList<>(meta.getLore());
+                    updatedLore.add("");
+                    updatedLore.addAll(nbtLines);
+                    meta.setLore(updatedLore);
+                } else if (meta.getLore() != null) {
+                    List<String> updatedLore = new ArrayList<>(meta.getLore());
+                    updatedLore.addAll(nbtLines);
+                    meta.setLore(updatedLore);
+                }
+            }
+        }
+
         if (plugin.getConfig().isSet(path + ".custom-model-data")) {
             meta.setCustomModelData(plugin.getConfig().getInt(path + ".custom-model-data"));
         }
@@ -217,7 +234,7 @@ public class FillOrderGUI implements InventoryHolder {
             case "fill-gui.controls.cancel" -> "BARRIER";
             case "fill-gui.controls.info" -> "PAPER";
             case "fill-gui.controls.confirm" -> "EMERALD_BLOCK";
-            case "fill-gui.filler" -> "GRAY_STAINED_GLASS_PANE";
+            case "fill-gui.filler" -> "BLACK_STAINED_GLASS_PANE";
             default -> "STONE";
         };
     }
@@ -310,5 +327,19 @@ public class FillOrderGUI implements InventoryHolder {
         List<String> colored = new ArrayList<>();
         for (String line : lines) colored.add(color(line));
         return colored;
+    }
+
+    private List<String> buildNbtLines(ItemStack item) {
+        Map<String, String> values = ItemMatcher.describeStringPersistentData(item);
+        if (values.isEmpty()) return List.of();
+
+        List<String> lines = new ArrayList<>();
+        lines.add(color("&8&m----------------"));
+        lines.add(color("&bNBT Data"));
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            lines.add(color("&7" + entry.getKey() + ": &f" + entry.getValue()));
+        }
+        lines.add(color("&8&m----------------"));
+        return lines;
     }
 }

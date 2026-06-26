@@ -16,12 +16,12 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public class ItemMatcher {
     
     private static final String CUSTOM_ITEM_ID_KEY = "custom_item_id";
     private static final Set<NamespacedKey> DEFAULT_IDENTITY_KEYS = Set.of(
-            new NamespacedKey("axorders", CUSTOM_ITEM_ID_KEY),
-            new NamespacedKey("axordersaddon", CUSTOM_ITEM_ID_KEY),
+            new NamespacedKey("buyorders", CUSTOM_ITEM_ID_KEY),
             new NamespacedKey("pyrofishing", "pyro_item")
     );
     private static final Set<String> DEFAULT_IDENTITY_NAMESPACES = Set.of("mcmmo");
@@ -48,11 +48,29 @@ public class ItemMatcher {
                 }
             }
 
-            return submitted.getType() == required.getType();
+            if (submitted.getType() != required.getType()) {
+                return false;
+            }
+
+            if (requireMetaWithIdentity()) {
+                // Strict mode: require full item similarity in addition to identity keys.
+                return submitted.isSimilar(required);
+            }
+
+            return true;
         }
 
         // Only vanilla/player-customized items without PDC identifiers may fall back to normal similarity.
         return submitted.isSimilar(required);
+    }
+
+    private static boolean requireMetaWithIdentity() {
+        try {
+            BuyOrders plugin = BuyOrders.getPlugin(BuyOrders.class);
+            return plugin.getConfig().getBoolean("item-matching.require-meta-with-identity", true);
+        } catch (IllegalStateException ignored) {
+            return true;
+        }
     }
     
     /**

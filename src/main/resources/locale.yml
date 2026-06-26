@@ -1,0 +1,37 @@
+# Language strings for AGAuctions
+# Placeholders use braces, for example: {amount}, {material}, {price}
+
+messages:
+  reloaded: "&aAGAuctions files reloaded."
+  no-permission: "&cYou are missing permission for that action."
+  player-only: "&cOnly players can run this command."
+  unknown-material: "&cMaterial not recognized: &e{material}"
+  invalid-amount: "&cThat amount is not valid."
+  invalid-price: "&cThat price is not valid."
+  order-created: "&aBuy order created: &e{amount}x {material} &aat &e{price} &aeach."
+  order-filled: "&aOrder filled: &e{amount}x {material} &afor &e{payment}&a."
+  order-cancelled: "&aOrder cancelled."
+  order-not-found: "&cOrder could not be found."
+  no-currency-hook: "&cNo supported economy provider is currently available."
+  not-enough-money: "&cYou need &e{amount} &cto do that."
+  search-prompt: "&eType your search text in chat. Use &ccancel &eor &cclear&e."
+  search-set: "&aSearch updated to: &f{query}"
+  search-cleared: "&aSearch has been cleared."
+  search-cancelled: "&7Search cancelled."
+  search-empty-input: "&cEnter a search value first."
+  order-save-failed: "&cSaving that order failed. Refunded when possible."
+  refund-failed: "&cA failure occurred and refund could not fully complete. Contact staff."
+  own-order: "&cYou cannot fill your own order."
+  no-items: "&cYou do not have any &e{material}&c."
+  not-enough-items: "&cYou only have &e{available}x {material}&c."
+  fill-invalid-item: "&cThat item does not match this request."
+  collection-pending: "&aYou have &e{amount} &awaiting stack(s). Use &e/orders collect&a."
+  collection-claimed: "&aCollected one item stack."
+  collection-claimed-all: "&aCollected &e{amount} &astack(s)."
+  collection-empty: "&eNo waiting items in your collection."
+  collection-full: "&cNot enough inventory space."
+  ah-claim-empty: "&eYou have no auction claims to collect."
+  ah-claim-success: "&aCollected &e{amount} &aauction stack(s)."
+  item-blacklisted: "&cThat item is blacklisted and cannot be used in AGAuctions."
+
+version: 1
